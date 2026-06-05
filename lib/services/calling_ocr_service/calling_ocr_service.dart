@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 /// Result returned by [PlateOcrApiService.recognizePlate].
 class PlateOcrResult {
@@ -23,6 +22,15 @@ class PlateOcrResult {
 class PlateOcrApiService {
   static const String _endpoint = 'http://qudrapps.com:8321/do_plate_ocr';
 
+  /// Dedicated client — the OCR endpoint is a standalone service with no auth,
+  /// so it does not share [DioHelper]'s base URL / bearer headers.
+  static final Dio _dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+    headers: {'Content-Type': 'application/json'},
+    responseType: ResponseType.json,
+  ));
+
   /// Sends the cropped plate image to the OCR API and parses the result.
   ///
   /// [croppedPlateBase64] — base64 PNG of the cropped plate (~94×24 px).
@@ -31,38 +39,31 @@ class PlateOcrApiService {
   ///
   /// Throws a [PlateOcrException] on HTTP errors or unexpected response shapes.
   static Future<PlateOcrResult> recognizePlate(String croppedPlateBase64) async {
-    final uri = Uri.parse(_endpoint);
-
-    late http.Response response;
+    late Response response;
     try {
-      response = await http
-          .post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'pngImageBase64': croppedPlateBase64}),
-      )
-          .timeout(const Duration(seconds: 30));
-    } catch (e) {
-      throw PlateOcrException('Network error: $e');
+      response = await _dio.post(
+        _endpoint,
+        data: {'pngImageBase64': croppedPlateBase64},
+      );
+    } on DioException catch (e) {
+      throw PlateOcrException('Network error: ${e.message}');
     }
 
     if (response.statusCode != 200) {
       throw PlateOcrException(
-        'Server returned ${response.statusCode}: ${response.body}',
+        'Server returned ${response.statusCode}: ${response.data}',
       );
     }
 
-    late Map<String, dynamic> json;
-    try {
-      json = jsonDecode(response.body) as Map<String, dynamic>;
-    } catch (_) {
-      throw PlateOcrException('Could not parse response: ${response.body}');
+    final json = response.data;
+    if (json is! Map<String, dynamic>) {
+      throw PlateOcrException('Unexpected response shape: ${response.data}');
     }
 
     // API contract: {"success": true, "result": "3407AGD"}
     final success = json['success'] as bool? ?? false;
     if (!success) {
-      throw PlateOcrException('API returned success=false: ${response.body}');
+      throw PlateOcrException('API returned success=false: ${response.data}');
     }
 
     final raw = json['result'] as String? ?? '';

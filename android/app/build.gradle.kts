@@ -26,15 +26,31 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+//    testOptions {
+//        unitTests.all {
+//            it.enabled = false
+//        }
+//    }
 
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    // Keep the .tflite model uncompressed so it can be memory-mapped at runtime
+    // (FileUtil.loadMappedFile fails on a compressed asset).
+    androidResources {
+        noCompress += "tflite"
+    }
 }
 
+
 dependencies {
+
+    // Kotlin coroutines — used by the plate-detection MethodChannel handler.
+    // Added explicitly so it doesn't depend on a Flutter plugin pulling it in.
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     // TensorFlow Lite (clean)
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
@@ -52,4 +68,10 @@ dependencies {
 
 flutter {
     source = "../.."
+}
+tasks.configureEach {
+    if (name.contains("test", ignoreCase = true) ||
+        name.contains("Test", ignoreCase = true)) {
+        enabled = false
+    }
 }

@@ -1,11 +1,13 @@
 import 'dart:io';
-import 'dart:math';
 import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:manual_entry_ticket/services/log_helper/log_helper.dart';
+import 'package:path_provider/path_provider.dart';
 
+import '../../services/calling_ocr_service/calling_ocr_service.dart';
+import '../../services/plate_channel/plate_channel_service.dart';
 import '../../services/sp_helper/sp_helper.dart';
 import '../../services/sp_helper/sp_keys.dart';
 
@@ -16,7 +18,6 @@ class UploadImageFileCubit extends Cubit<UploadImageFileState> {
 
   final ImagePicker _picker = ImagePicker();
 
-  // TODO: Replace with real AI/OCR API endpoints when integrated.
   Future<void> capturePhoto({required bool isAiEnabled}) async {
     emit(UploadImageFilePickLoading());
     try {
@@ -66,56 +67,90 @@ class UploadImageFileCubit extends Cubit<UploadImageFileState> {
       // Wait 1 second so user sees their photo, then start OCR
       await Future.delayed(const Duration(seconds: 1));
 
-      // Start OCR — pass both path (for display) and base64 (for API)
-      await runMockOcrAnalysis(imagePath, base64Image);
+      // Start the real detect → crop → OCR pipeline.
+      await runOcrAnalysis(imagePath, base64Image);
     } catch (e, stackTrace) {
       await LogHelper.logException('Failed to capture photo', e, stackTrace);
       emit(UploadImageFilePickFailure(e.toString()));
     }
   }
 
-  Future<void> runMockOcrAnalysis(String imagePath, String base64Image) async {
-    // Pass imagePath so the captured photo box stays visible during OCR loading
+  /// Full AI pipeline for a captured photo:
+  ///  1. native YOLO detect + crop the plate (base64 PNG)
+  ///  2. remote OCR API to read the plate text
+  ///
+  /// On any miss/failure we fall back to manual entry (photo kept, fields empty)
+  /// rather than blocking the user.
+  Future<void> runOcrAnalysis(String imagePath, String base64Image) async {
+    // Keep the captured photo visible while the pipeline runs.
     emit(UploadImageFileOcrLoading(imagePath));
 
-    await LogHelper.log('AI_OCR', 'Starting AI OCR analysis on image: $imagePath');
+    await LogHelper.log('AI_OCR', 'Starting plate detection on image: $imagePath');
 
-    // Mock processing delay
-    await Future.delayed(const Duration(milliseconds: 2500));
+    // ── Step 1: native detection + crop ──────────────────────────────────
+    String? croppedBase64;
+    try {
+      croppedBase64 = await PlateChannelService.detectAndCropPlate(base64Image);
+    } on PlateDetectionException catch (e, stackTrace) {
+      await LogHelper.logException('Native plate detection failed', e, stackTrace);
+      emit(UploadImageFileOcrUnavailable(
+        originalImagePath: imagePath,
+        base64Image: base64Image,
+        message: "Plate detection failed — please enter the plate manually.",
+      ));
+      return;
+    }
 
-    final numbers = _generateRandomSaudiPlateNumbers();
-    final letters = _generateRandomSaudiPlateLetters();
+    if (croppedBase64 == null || croppedBase64.isEmpty) {
+      await LogHelper.log('AI_OCR', 'No plate detected in image');
+      emit(UploadImageFileOcrUnavailable(
+        originalImagePath: imagePath,
+        base64Image: base64Image,
+        message: "No plate detected — please enter the plate manually.",
+      ));
+      return;
+    }
 
-    await LogHelper.log('AI_OCR', 'OCR Analysis complete. Result: $numbers $letters');
+    // Persist the crop to a temp file so the UI can preview it.
+    final platePath = await _writeBase64ToTempPng(croppedBase64);
+    await LogHelper.log('AI_OCR', 'Plate cropped (base64 length: ${croppedBase64.length})');
 
-    emit(UploadImageFileOcrSuccess(
-      originalImagePath: imagePath,
-      base64Image: base64Image,
-      plateImagePath: imagePath, // MOCK: same image used for plate crop preview
-      plateNumbers: numbers,
-      plateLetters: letters,
-    ));
+    // ── Step 2: remote OCR ───────────────────────────────────────────────
+    try {
+      final result = await PlateOcrApiService.recognizePlate(croppedBase64);
+      await LogHelper.log('AI_OCR', 'OCR result: ${result.raw} → ${result.numbers} ${result.letters}');
+
+      emit(UploadImageFileOcrSuccess(
+        originalImagePath: imagePath,
+        base64Image: base64Image, // original full photo — used for upload
+        plateImagePath: platePath ?? imagePath,
+        plateNumbers: result.numbers,
+        plateLetters: result.letters,
+      ));
+    } on PlateOcrException catch (e, stackTrace) {
+      await LogHelper.logException('OCR API failed', e, stackTrace);
+      emit(UploadImageFileOcrUnavailable(
+        originalImagePath: imagePath,
+        base64Image: base64Image,
+        plateImagePath: platePath, // we still have the crop to show
+        message: "Could not read the plate — please enter it manually.",
+      ));
+    }
   }
 
-  String _generateRandomSaudiPlateNumbers() {
-    final rand = Random();
-    final firstDigit = rand.nextInt(9) + 1;
-    final extraDigits = rand.nextInt(4);
-    String numStr = '$firstDigit';
-    for (int i = 0; i < extraDigits; i++) {
-      numStr += rand.nextInt(10).toString();
+  /// Writes a base64 PNG to a temp file and returns its path (null on failure).
+  Future<String?> _writeBase64ToTempPng(String base64Png) async {
+    try {
+      final dir = await getTemporaryDirectory();
+      final file = File(
+        '${dir.path}/plate_crop_${DateTime.now().millisecondsSinceEpoch}.png',
+      );
+      await file.writeAsBytes(base64Decode(base64Png));
+      return file.path;
+    } catch (e, stackTrace) {
+      await LogHelper.logException('Failed to write plate crop to temp file', e, stackTrace);
+      return null;
     }
-    return numStr;
-  }
-
-  String _generateRandomSaudiPlateLetters() {
-    const allowed = ['A', 'B', 'D', 'E', 'G', 'H', 'J', 'K', 'L', 'N', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Z'];
-    final rand = Random();
-    String letterStr = '';
-    for (int i = 0; i < 3; i++) {
-      letterStr += allowed[rand.nextInt(allowed.length)];
-    }
-    return letterStr;
   }
 
   void reset() {

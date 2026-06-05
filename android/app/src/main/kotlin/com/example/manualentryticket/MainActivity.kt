@@ -24,9 +24,8 @@ class MainActivity : FlutterActivity() {
         private const val PLATE_CROP_WIDTH = 94
         private const val PLATE_CROP_HEIGHT = 24
 
-        // TODO: set your real model paths
-        private const val MODEL_PATH = "model.tflite"
-        private const val LABELS_PATH = "labels.txt"
+        // Plate-detector model, bundled in android/app/src/main/assets/
+        private const val MODEL_PATH = "best_float16.tflite"
     }
 
     private var detector: Detector? = null
@@ -68,8 +67,7 @@ class MainActivity : FlutterActivity() {
             try {
                 detector = Detector(
                     baseContext,
-                    MODEL_PATH,
-                    LABELS_PATH
+                    MODEL_PATH
                 ) { msg ->
                     Log.d(TAG, "Detector: $msg")
                 }
@@ -111,7 +109,7 @@ class MainActivity : FlutterActivity() {
             }
 
             // 3. Pick best box
-            val best = boxes.maxByOrNull { it.first.cnf }!!.first
+            val best = boxes.maxByOrNull { it.cnf }!!
 
             val roi = Rect(
                 (best.x1 * originalBitmap.width).toInt().coerceAtLeast(0),

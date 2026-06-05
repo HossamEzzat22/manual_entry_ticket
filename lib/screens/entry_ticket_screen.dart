@@ -88,6 +88,8 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
       return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image);
     } else if (uploadState is UploadImageFileOcrSuccess) {
       return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image);
+    } else if (uploadState is UploadImageFileOcrUnavailable) {
+      return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image);
     }
     return (imagePath: null, base64Image: null);
   }
@@ -116,6 +118,9 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
               _numbersController.text = state.plateNumbers;
               _lettersController.text = state.plateLetters;
               CustomSnackBar.showSuccess(context, "AI Auto-detection: License plate populated!");
+            } else if (state is UploadImageFileOcrUnavailable) {
+              LoadingDialog.hide(context);
+              CustomSnackBar.showInfo(context, state.message);
             } else if (state is UploadImageFilePickFailure) {
               LoadingDialog.hide(context);
               CustomSnackBar.showError(context, "Failed to capture: ${state.error}");
@@ -229,6 +234,8 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                     originalPath = fileState.originalImagePath;
                   } else if (fileState is UploadImageFileOcrSuccess) {
                     originalPath = fileState.originalImagePath;
+                  } else if (fileState is UploadImageFileOcrUnavailable) {
+                    originalPath = fileState.originalImagePath;
                   }
 
                   return Container(
@@ -297,6 +304,8 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                             final bool isOcrLoading = fileState is UploadImageFileOcrLoading;
                             String? platePath;
                             if (fileState is UploadImageFileOcrSuccess) {
+                              platePath = fileState.plateImagePath;
+                            } else if (fileState is UploadImageFileOcrUnavailable) {
                               platePath = fileState.plateImagePath;
                             }
 

@@ -42,3 +42,21 @@ final class UploadImageFileOcrSuccess extends UploadImageFileState {
     required this.plateLetters,
   });
 }
+
+// AI was on but detection/OCR could not produce a plate. The photo is kept so
+// the user can submit after typing the plate manually.
+// [plateImagePath] is non-null when we got a crop but OCR failed (so we can
+// still show the crop preview); null when no plate was detected at all.
+final class UploadImageFileOcrUnavailable extends UploadImageFileState {
+  final String originalImagePath;
+  final String base64Image;
+  final String? plateImagePath;
+  final String message;
+
+  UploadImageFileOcrUnavailable({
+    required this.originalImagePath,
+    required this.base64Image,
+    required this.message,
+    this.plateImagePath,
+  });
+}
