@@ -35,6 +35,14 @@ class Detector(
     private var numChannel = 0
     private var numElements = 0
 
+    private var inputShapeStr = "?"
+    private var outputShapeStr = "?"
+
+    /// Human-readable summary of the most recent [detect] call, surfaced to the
+    /// app log so detection misses can be diagnosed without logcat.
+    var lastDetectionInfo: String = "no detection yet"
+        private set
+
     private val imageProcessor = ImageProcessor.Builder()
         .add(NormalizeOp(INPUT_MEAN, INPUT_STANDARD_DEVIATION))
         .add(CastOp(INPUT_IMAGE_TYPE))
@@ -50,6 +58,8 @@ class Detector(
 
         val inputShape = interpreter.getInputTensor(0)?.shape()
         val outputShape = interpreter.getOutputTensor(0)?.shape()
+        inputShapeStr = inputShape?.contentToString() ?: "null"
+        outputShapeStr = outputShape?.contentToString() ?: "null"
 
         if (inputShape != null) {
             tensorWidth = inputShape[1]
@@ -79,7 +89,10 @@ class Detector(
      * or null if nothing passed the confidence threshold.
      */
     fun detect(frame: Bitmap): List<BoundingBox>? {
-        if (tensorWidth == 0 || tensorHeight == 0 || numChannel == 0 || numElements == 0) return null
+        if (tensorWidth == 0 || tensorHeight == 0 || numChannel == 0 || numElements == 0) {
+            lastDetectionInfo = "model shapes not initialized (in=$inputShapeStr out=$outputShapeStr)"
+            return null
+        }
 
         var inferenceTime = SystemClock.uptimeMillis()
 
@@ -93,9 +106,26 @@ class Detector(
         val output = TensorBuffer.createFixedSize(intArrayOf(1, numChannel, numElements), OUTPUT_IMAGE_TYPE)
         interpreter.run(imageBuffer, output.buffer)
 
-        val bestBoxes = bestBox(output.floatArray)
+        val array = output.floatArray
+
+        // Max confidence across ALL candidates, even below threshold — tells us
+        // whether the model "sees" anything (high conf but 0 boxes ⇒ a coord /
+        // layout problem; ~0 conf ⇒ a genuine miss or wrong tensor layout).
+        var maxConf = 0f
+        for (c in 0 until numElements) {
+            val v = array[c + numElements * 4]
+            if (v > maxConf) maxConf = v
+        }
+
+        val bestBoxes = bestBox(array)
         inferenceTime = SystemClock.uptimeMillis() - inferenceTime
-        Log.d("Detector", "inference: ${inferenceTime}ms, boxes: ${bestBoxes?.size ?: 0}")
+
+        lastDetectionInfo = "in=$inputShapeStr out=$outputShapeStr " +
+            "numChannel=$numChannel numElements=$numElements " +
+            "maxConf=${"%.3f".format(maxConf)} threshold=$CONFIDENCE_THRESHOLD " +
+            "boxesOverThreshold=${bestBoxes?.size ?: 0} inferenceMs=$inferenceTime " +
+            "frame=${frame.width}x${frame.height}"
+        Log.d("Detector", lastDetectionInfo)
 
         return bestBoxes
     }
@@ -173,7 +203,7 @@ class Detector(
         private const val INPUT_STANDARD_DEVIATION = 255f
         private val INPUT_IMAGE_TYPE = DataType.FLOAT32
         private val OUTPUT_IMAGE_TYPE = DataType.FLOAT32
-        private const val CONFIDENCE_THRESHOLD = 0.7F
+        private const val CONFIDENCE_THRESHOLD = 0.5F
         private const val IOU_THRESHOLD = 0.5F
     }
 }

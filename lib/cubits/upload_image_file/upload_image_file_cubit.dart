@@ -90,7 +90,11 @@ class UploadImageFileCubit extends Cubit<UploadImageFileState> {
     // ── Step 1: native detection + crop ──────────────────────────────────
     String? croppedBase64;
     try {
-      croppedBase64 = await PlateChannelService.detectAndCropPlate(base64Image);
+      final detection = await PlateChannelService.detectAndCropPlate(base64Image);
+      croppedBase64 = detection.croppedBase64;
+      if (detection.diag != null) {
+        await LogHelper.log('AI_OCR', 'Detector: ${detection.diag}');
+      }
     } on PlateDetectionException catch (e, stackTrace) {
       await LogHelper.logException('Native plate detection failed', e, stackTrace);
       emit(UploadImageFileOcrUnavailable(

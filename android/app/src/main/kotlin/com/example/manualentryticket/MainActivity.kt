@@ -99,11 +99,12 @@ class MainActivity : FlutterActivity() {
                 ?: return sendError(result, "DETECTOR_NOT_READY", "Model not initialized")
 
             val boxes = detectorLocal.detect(originalBitmap)
+            val diag = detectorLocal.lastDetectionInfo
 
             if (boxes.isNullOrEmpty()) {
                 originalBitmap.recycle()
                 withContext(Dispatchers.Main) {
-                    result.success(null)
+                    result.success(mapOf("plate" to null, "diag" to diag))
                 }
                 return
             }
@@ -135,7 +136,7 @@ class MainActivity : FlutterActivity() {
 
             // 5. Return to Flutter
             withContext(Dispatchers.Main) {
-                result.success(croppedBase64)
+                result.success(mapOf("plate" to croppedBase64, "diag" to diag))
             }
 
         } catch (e: Exception) {
