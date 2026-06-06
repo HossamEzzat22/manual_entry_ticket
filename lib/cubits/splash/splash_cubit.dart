@@ -13,13 +13,11 @@ class SplashCubit extends Cubit<SplashState> {
   Future<void> startSplashDelay() async {
     emit(SplashLoading());
 
-    // Run splash delay and old log cleanup in parallel
     await Future.wait([
       Future.delayed(const Duration(seconds: 2)),
       LogHelper.deleteOldLogs(),
     ]);
 
-    // Check if a valid non-expired token exists
     final isValid = await _hasValidSession();
 
     if (isValid) {
@@ -29,6 +27,10 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
+  /// Returns true if the user has a usable session:
+  ///  - token still valid (within 4 hours)  → use token
+  ///  - token expired but refresh token still valid (within 6 hours) → use refresh token
+  ///  - both expired → clear session, go to login
   Future<bool> _hasValidSession() async {
     try {
       final token = SharedPreferenceHelper.getData(
@@ -41,35 +43,56 @@ class SplashCubit extends Cubit<SplashState> {
         return false;
       }
 
-      final expiryStr = SharedPreferenceHelper.getData(
+      final now = DateTime.now();
+      final fmt = DateFormat('dd/MM/yyyy HH:mm');
+
+      // ── Check primary token ──────────────────────────────────────────────
+      final tokenExpiryStr = SharedPreferenceHelper.getData(
         key: SharedPreferencesKeys.tokenExpiryDate,
       ) as String? ??
           '';
 
-      if (expiryStr.isEmpty) {
-        await LogHelper.log('AUTH', 'Splash: no expiry date found → redirect to login');
-        return false;
+      if (tokenExpiryStr.isNotEmpty) {
+        final tokenExpiry = fmt.parse(tokenExpiryStr);
+        if (now.isBefore(tokenExpiry)) {
+          await LogHelper.log(
+            'AUTH',
+            'Splash: token valid — expires at $tokenExpiryStr → skip login',
+          );
+          return true;
+        }
       }
 
-      // Backend format: "06/06/2026 07:01"
-      final expiry = DateFormat('dd/MM/yyyy HH:mm').parse(expiryStr);
-      final now = DateTime.now();
+      // ── Primary token expired — check refresh token ──────────────────────
+      final refreshToken = SharedPreferenceHelper.getData(
+        key: SharedPreferencesKeys.refreshToken,
+      ) as String? ??
+          '';
 
-      if (now.isBefore(expiry)) {
-        await LogHelper.log(
-          'AUTH',
-          'Splash: session valid — expires at $expiryStr → skip login',
-        );
-        return true;
-      } else {
-        await LogHelper.log(
-          'AUTH',
-          'Splash: token expired at $expiryStr → redirect to login',
-        );
-        // Clear stored credentials so login starts fresh
-        await _clearSession();
-        return false;
+      final refreshExpiryStr = SharedPreferenceHelper.getData(
+        key: SharedPreferencesKeys.refreshTokenExpiryDate,
+      ) as String? ??
+          '';
+
+      if (refreshToken.isNotEmpty && refreshExpiryStr.isNotEmpty) {
+        final refreshExpiry = fmt.parse(refreshExpiryStr);
+        if (now.isBefore(refreshExpiry)) {
+          await LogHelper.log(
+            'AUTH',
+            'Splash: primary token expired but refresh token valid '
+                'until $refreshExpiryStr → skip login, DioHelper will use refresh token',
+          );
+          return true; // refresh token still good — DioHelper will pick it up
+        }
       }
+
+      // ── Both expired ─────────────────────────────────────────────────────
+      await LogHelper.log(
+        'AUTH',
+        'Splash: both token and refresh token expired → clear session, redirect to login',
+      );
+      await _clearSession();
+      return false;
     } catch (e) {
       await LogHelper.log('AUTH', 'Splash: session check error: $e → redirect to login');
       return false;

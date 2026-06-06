@@ -41,14 +41,11 @@ class PendingTicketRetryService {
       final pending = await PendingTicketDb.getAll();
       if (pending.isEmpty) return;
 
-      final token =
-          SharedPreferenceHelper.getData(key: SharedPreferencesKeys.token)
-          as String? ??
-              '';
+      // final token = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.token) as String? ?? '';
 
       await LogHelper.log('OUTBOX', 'Retrying ${pending.length} pending ticket(s)');
       for (final ticket in pending) {
-        await _process(ticket, token);
+        await _process(ticket);
       }
     } catch (e, stackTrace) {
       await LogHelper.logException('Outbox flush failed', e, stackTrace);
@@ -57,7 +54,7 @@ class PendingTicketRetryService {
     }
   }
 
-  Future<void> _process(PendingTicket ticket, String token) async {
+  Future<void> _process(PendingTicket ticket) async {
     bool needsInsert = ticket.needsInsert;
     bool needsImage = ticket.needsImage;
     final hasImage = ticket.base64Image != null && ticket.base64Image!.isNotEmpty;
@@ -76,7 +73,7 @@ class PendingTicketRetryService {
           deviceId: ticket.deviceId,
           plate: ticket.plate,
           ticketNumber: ticket.ticketNumber,
-          token: token,
+          // token: token,
           entrySyncTime: entrySyncTime, // ← fixed: was hardcoded ''
         )) {
           needsInsert = false;
@@ -88,7 +85,7 @@ class PendingTicketRetryService {
           deviceId: ticket.deviceId,
           ticketNumber: ticket.ticketNumber,
           base64Image: ticket.base64Image!,
-          token: token,
+          // token: token,
         )) {
           needsImage = false;
         }

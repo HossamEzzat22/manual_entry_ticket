@@ -110,7 +110,7 @@ class UploadImageFileCubit extends Cubit<UploadImageFileState> {
       emit(UploadImageFileOcrUnavailable(
         originalImagePath: imagePath,
         base64Image: base64Image,
-        message: "No plate detected — please enter the plate manually.",
+        message: "Could not detect a plate in this photo.\nPlease take a clearer photo or enter the plate number manually.",
       ));
       return;
     }

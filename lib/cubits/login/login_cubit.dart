@@ -213,6 +213,8 @@ class LoginCubit extends Cubit<LoginState> {
     }
   }
 
+
+
   @override
   Future<void> close() {
     emailController.dispose();

@@ -55,7 +55,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
 
     final deviceIdRaw = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.deviceID);
     final deviceId = int.tryParse(deviceIdRaw?.toString() ?? '') ?? 0;
-    final token = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.token) as String? ?? "";
+    // final token = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.token) as String? ?? "";
 
     final entrySyncTime = DateTime.now().toIso8601String();
 
@@ -71,7 +71,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
         deviceId: deviceId,
         plate: plate,
         ticketNumber: ticketNo,
-        token: token,
+        // token: token,
         entrySyncTime: entrySyncTime,
       );
     } catch (e, stackTrace) {
@@ -87,7 +87,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
           deviceId: deviceId,
           ticketNumber: ticketNo,
           base64Image: base64Image,
-          token: token,
+          // token: token,
         );
       } catch (e, stackTrace) {
         await LogHelper.logException('UpdateEntryTicketImage failed — will queue', e, stackTrace);

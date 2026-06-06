@@ -9,6 +9,7 @@ import '../core/constants/app_colors.dart';
 import '../cubits/app_settings/app_settings_cubit.dart';
 import '../cubits/insert_manual_entry_ticket/insert_manual_entry_ticket_cubit.dart';
 import '../cubits/upload_image_file/upload_image_file_cubit.dart';
+import '../services/logout_helper/logout_helper.dart';
 import '../services/sp_helper/sp_helper.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/custom_button.dart';
@@ -30,6 +31,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _numbersController = TextEditingController();
   final TextEditingController _lettersController = TextEditingController();
+
 
 
   /// Initializes the screen state and attaches listeners to:
@@ -158,7 +160,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
               LoadingDialog.hide(context);
               _numbersController.text = state.plateNumbers;
               _lettersController.text = state.plateLetters;
-              CustomSnackBar.showSuccess(context, "AI Auto-detection: License plate populated!");
+              CustomSnackBar.showSuccess(context, "AI Auto-detection: License plate populated! \n Please review and correct if needed.");
             } else if (state is UploadImageFileOcrUnavailable) {
               LoadingDialog.hide(context);
               CustomSnackBar.showInfo(context, state.message);
@@ -440,6 +442,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
               // ── Step 4: Plate Number Form ─────────────────────────────────
               Form(
                 key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -560,6 +563,14 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                       icon: Icons.share_outlined,
                       isPrimary: false,
                       onPressed: () => LogsBottomSheet.show(context),
+                    ),
+                    Gaps.h12,
+                    CustomButton(
+                      label: "LOGOUT",
+                      icon: Icons.logout_rounded,
+                      color: Colors.red,
+                      isPrimary: false,
+                      onPressed: () => LogoutHelper.logout(context),
                     ),
                   ],
                 ),

@@ -19,7 +19,7 @@ class TicketApiService {
     required int deviceId,
     required String plate,
     required String ticketNumber,
-    required String token,
+    // required String token,
     required String entrySyncTime,
 
   }) async {
@@ -42,7 +42,6 @@ class TicketApiService {
 
     final response = await DioHelper.postData(
       url: _insertUrl,
-      token: token,
       data: form,
     );
 
@@ -58,7 +57,7 @@ class TicketApiService {
     required int deviceId,
     required String ticketNumber,
     required String base64Image,
-    required String token,
+    // required String token,
   }) async {
     final form = FormData.fromMap({
       "deviceId": deviceId,
@@ -74,7 +73,6 @@ class TicketApiService {
 
     final response = await DioHelper.postData(
       url: _imageUrl,
-      token: token,
       data: form,
     );
 

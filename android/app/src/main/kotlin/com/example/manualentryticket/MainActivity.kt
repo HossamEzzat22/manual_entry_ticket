@@ -24,8 +24,10 @@ class MainActivity : FlutterActivity() {
         private const val TAG = "PlateOCR"
         private const val CHANNEL = "com.yourapp/plate_detection"
 
-        private const val PLATE_CROP_WIDTH = 200
-        private const val PLATE_CROP_HEIGHT = 50
+//        private const val PLATE_CROP_WIDTH = 200
+//        private const val PLATE_CROP_HEIGHT = 50
+        private const val PLATE_TARGET_HEIGHT = 50
+
 
         // Plate-detector model, bundled in android/app/src/main/assets/
         private const val MODEL_PATH = "best_float16.tflite"
@@ -199,6 +201,7 @@ class MainActivity : FlutterActivity() {
         return Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
     }
 
+    // AFTER
     private fun cropAndResize(bitmap: Bitmap, rect: Rect): Bitmap? {
         if (rect.width() <= 0 || rect.height() <= 0) return null
 
@@ -210,15 +213,24 @@ class MainActivity : FlutterActivity() {
             rect.height()
         )
 
+        // Calculate width that preserves the original plate aspect ratio
+        // at the fixed target height — so a wide plate stays wide and a
+        // narrow plate stays narrow.
+        val aspectRatio = cropped.width.toFloat() / cropped.height.toFloat()
+        val targetWidth = (PLATE_TARGET_HEIGHT * aspectRatio).toInt().coerceAtLeast(1)
+
+        Log.d(TAG, "Plate crop: original=${cropped.width}x${cropped.height}, " +
+                "aspectRatio=${"%.2f".format(aspectRatio)}, " +
+                "resized=${targetWidth}x$PLATE_TARGET_HEIGHT")
+
         val resized = Bitmap.createScaledBitmap(
             cropped,
-            PLATE_CROP_WIDTH,
-            PLATE_CROP_HEIGHT,
+            targetWidth,
+            PLATE_TARGET_HEIGHT,
             true
         )
 
         if (resized != cropped) cropped.recycle()
-
         return resized
     }
 

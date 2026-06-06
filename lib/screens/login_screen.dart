@@ -97,11 +97,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   CustomTextField(
                     controller: loginCubit.emailController,
                     labelText: "Email",
-                    hintText: "Enter email",
+                    hintText: "example@domain.com",
+                    keyboardType: TextInputType.emailAddress,
                     prefixIcon: const Icon(Icons.email_outlined),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
                         return "Email is required";
+                      }
+                      final emailRegex = RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$');
+                      if (!emailRegex.hasMatch(val.trim())) {
+                        return "Enter a valid email (e.g. example@domain.com)";
                       }
                       return null;
                     },

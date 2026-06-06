@@ -17,6 +17,8 @@ class CustomTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextCapitalization textCapitalization;
   final String? counterText;
+  final bool autofocus;
+
 
   const CustomTextField({
     required this.controller,
@@ -32,6 +34,7 @@ class CustomTextField extends StatelessWidget {
     this.validator,
     this.textCapitalization = TextCapitalization.none,
     this.counterText = "",
+    this.autofocus = false,
     super.key,
   });
 
@@ -50,6 +53,7 @@ class CustomTextField extends StatelessWidget {
         ),
         SizedBox(height: 8.h),
         TextFormField(
+          autofocus: autofocus,
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
@@ -60,8 +64,8 @@ class CustomTextField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 16.sp,
+              color: Colors.grey.shade400,
+              fontSize: 13.sp,
             ),
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
