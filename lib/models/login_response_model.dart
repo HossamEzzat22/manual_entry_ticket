@@ -2,13 +2,13 @@ class LoginApiResponse {
   final String message;
   final int messageCode;
   final bool success;
-  final AuthData data;
+  final AuthData? data;
 
   LoginApiResponse({
     required this.message,
     required this.messageCode,
     required this.success,
-    required this.data,
+    this.data,
   });
 
   factory LoginApiResponse.fromJson(Map<String, dynamic> json) {
@@ -16,18 +16,27 @@ class LoginApiResponse {
       message: json['message'] as String? ?? '',
       messageCode: json['messageCode'] as int? ?? 0,
       success: json['success'] as bool? ?? false,
-      data: AuthData.fromJson(json['data'] as Map<String, dynamic>),
+      // data is null when success=false (backend returns null data on errors)
+      data: json['data'] != null
+          ? AuthData.fromJson(json['data'] as Map<String, dynamic>)
+          : null,
     );
   }
 }
 
 class AuthData {
   final String token;
+  final String tokenExpiryDate;
+  final String refreshToken;
+  final String refreshTokenExpiryDate;
   final String role;
   final AuthUser user;
 
   AuthData({
     required this.token,
+    required this.tokenExpiryDate,
+    required this.refreshToken,
+    required this.refreshTokenExpiryDate,
     required this.role,
     required this.user,
   });
@@ -35,6 +44,9 @@ class AuthData {
   factory AuthData.fromJson(Map<String, dynamic> json) {
     return AuthData(
       token: json['token'] as String? ?? '',
+      tokenExpiryDate: json['token_Expiry_Date'] as String? ?? '',
+      refreshToken: json['refresh_Token'] as String? ?? '',
+      refreshTokenExpiryDate: json['refresh_Token_Expiry_Date'] as String? ?? '',
       role: json['role'] as String? ?? '',
       user: AuthUser.fromJson(json['user'] as Map<String, dynamic>),
     );
@@ -81,16 +93,19 @@ class AuthUser {
 class AuthDevice {
   final int id;
   final String deviceName;
+  final int carParkId; // ← new field
 
   AuthDevice({
     required this.id,
     required this.deviceName,
+    required this.carParkId,
   });
 
   factory AuthDevice.fromJson(Map<String, dynamic> json) {
     return AuthDevice(
       id: json['id'] as int? ?? 0,
       deviceName: json['deviceName'] as String? ?? '',
+      carParkId: json['carParkId'] as int? ?? 0, // ← new field
     );
   }
 }

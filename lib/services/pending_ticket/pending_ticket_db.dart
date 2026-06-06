@@ -14,7 +14,7 @@ class PendingTicketDb {
     final path = p.join(dir, 'pending_tickets.db');
     _db = await openDatabase(
       path,
-      version: 1,
+      version: 2, // ← bumped from 1 to 2
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE $_table(
@@ -27,9 +27,19 @@ class PendingTicketDb {
             needsImage INTEGER NOT NULL,
             attempts INTEGER NOT NULL DEFAULT 0,
             lastError TEXT,
-            createdAt TEXT NOT NULL
+            createdAt TEXT NOT NULL,
+            entrySyncTime TEXT NOT NULL DEFAULT ''
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // Add entrySyncTime column to existing installs.
+          // DEFAULT '' so old queued rows get an empty string (handled in retry).
+          await db.execute(
+            "ALTER TABLE $_table ADD COLUMN entrySyncTime TEXT NOT NULL DEFAULT ''",
+          );
+        }
       },
     );
     return _db!;

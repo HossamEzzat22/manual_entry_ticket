@@ -2,7 +2,9 @@ package com.example.manualentryticket
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.graphics.Rect
+import android.media.ExifInterface
 import android.util.Base64
 import android.util.Log
 import androidx.annotation.WorkerThread
@@ -13,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 class MainActivity : FlutterActivity() {
@@ -21,8 +24,8 @@ class MainActivity : FlutterActivity() {
         private const val TAG = "PlateOCR"
         private const val CHANNEL = "com.yourapp/plate_detection"
 
-        private const val PLATE_CROP_WIDTH = 94
-        private const val PLATE_CROP_HEIGHT = 24
+        private const val PLATE_CROP_WIDTH = 200
+        private const val PLATE_CROP_HEIGHT = 50
 
         // Plate-detector model, bundled in android/app/src/main/assets/
         private const val MODEL_PATH = "best_float16.tflite"
@@ -90,16 +93,19 @@ class MainActivity : FlutterActivity() {
     ) {
         try {
 
-            // 1. Decode Base64 → Bitmap
-            val originalBitmap = decodeBase64ToBitmap(base64Image)
+            // 1. Decode Base64 → Bitmap (and apply EXIF orientation — BitmapFactory
+            //    ignores it, which would feed the model a sideways image).
+            val decoded = decodeBase64ToBitmap(base64Image)
                 ?: return sendError(result, "DECODE_FAILED", "Invalid image data")
+            val originalBitmap = decoded.bitmap
+            val exifOrientation = decoded.exifOrientation
 
             // 2. Run YOLO detection
             val detectorLocal = detector
                 ?: return sendError(result, "DETECTOR_NOT_READY", "Model not initialized")
 
             val boxes = detectorLocal.detect(originalBitmap)
-            val diag = detectorLocal.lastDetectionInfo
+            val diag = "exif=$exifOrientation " + detectorLocal.lastDetectionInfo
 
             if (boxes.isNullOrEmpty()) {
                 originalBitmap.recycle()
@@ -148,13 +154,43 @@ class MainActivity : FlutterActivity() {
     // -----------------------------
     // IMAGE HELPERS
     // -----------------------------
-    private fun decodeBase64ToBitmap(base64: String): Bitmap? {
+    private data class DecodedImage(val bitmap: Bitmap, val exifOrientation: Int)
+
+    private fun decodeBase64ToBitmap(base64: String): DecodedImage? {
         return try {
             val bytes = Base64.decode(base64, Base64.DEFAULT)
-            BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            val raw = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return null
+
+            // BitmapFactory does NOT apply EXIF rotation, so read it from the
+            // same bytes and rotate the bitmap upright before detection.
+            val orientation = try {
+                ExifInterface(ByteArrayInputStream(bytes))
+                    .getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+            } catch (e: Exception) {
+                ExifInterface.ORIENTATION_NORMAL
+            }
+
+            DecodedImage(applyExifOrientation(raw, orientation), orientation)
         } catch (e: Exception) {
             null
         }
+    }
+
+    private fun applyExifOrientation(bitmap: Bitmap, orientation: Int): Bitmap {
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+            ExifInterface.ORIENTATION_TRANSPOSE -> { matrix.postRotate(90f); matrix.postScale(-1f, 1f) }
+            ExifInterface.ORIENTATION_TRANSVERSE -> { matrix.postRotate(270f); matrix.postScale(-1f, 1f) }
+            else -> return bitmap // ORIENTATION_NORMAL / UNDEFINED → nothing to do
+        }
+        val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        if (rotated != bitmap) bitmap.recycle()
+        return rotated
     }
 
     private fun bitmapToBase64(bitmap: Bitmap): String {

@@ -29,6 +29,8 @@ class _SplashScreenState extends State<SplashScreen> {
       listener: (context, state) {
         if (state is SplashLoaded) {
           Navigator.pushReplacementNamed(context, '/login_screen');
+        } else if (state is SplashSessionValid) {
+          Navigator.pushReplacementNamed(context, '/entry_ticket_screen');
         }
       },
       child: Scaffold(

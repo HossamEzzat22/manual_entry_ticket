@@ -42,7 +42,9 @@ class PendingTicketRetryService {
       if (pending.isEmpty) return;
 
       final token =
-          SharedPreferenceHelper.getData(key: SharedPreferencesKeys.token) as String? ?? '';
+          SharedPreferenceHelper.getData(key: SharedPreferencesKeys.token)
+          as String? ??
+              '';
 
       await LogHelper.log('OUTBOX', 'Retrying ${pending.length} pending ticket(s)');
       for (final ticket in pending) {
@@ -60,6 +62,13 @@ class PendingTicketRetryService {
     bool needsImage = ticket.needsImage;
     final hasImage = ticket.base64Image != null && ticket.base64Image!.isNotEmpty;
 
+    // Use the original entrySyncTime stored when the ticket was first created.
+    // For old rows migrated from v1 (empty string), fall back to now so the
+    // request is still valid rather than sending an empty field.
+    final entrySyncTime = ticket.entrySyncTime.isNotEmpty
+        ? ticket.entrySyncTime
+        : DateTime.now().toIso8601String();
+
     try {
       if (needsInsert) {
         // Reuse the SAME ticketNumber so the server can dedupe across retries.
@@ -68,6 +77,7 @@ class PendingTicketRetryService {
           plate: ticket.plate,
           ticketNumber: ticket.ticketNumber,
           token: token,
+          entrySyncTime: entrySyncTime, // ← fixed: was hardcoded ''
         )) {
           needsInsert = false;
         }

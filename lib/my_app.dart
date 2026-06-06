@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:manual_entry_ticket/screens/entry_ticket_screen.dart';
 import 'package:manual_entry_ticket/screens/login_screen.dart';
-import 'package:manual_entry_ticket/screens/splash_screen.dart';
+import 'package:manual_entry_ticket/screens/splash_screen.dart' hide SplashCubit;
 import 'package:sizer/sizer.dart';
 
 import 'core/utils/navigator_key.dart';

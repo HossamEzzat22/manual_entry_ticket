@@ -80,6 +80,47 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
     _lettersController.dispose();
     super.dispose();
   }
+  void _openImageFullScreen(BuildContext context, String imagePath) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            // Pinch-to-zoom image
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 5.0,
+              child: Center(
+                child: Image.file(
+                  File(imagePath),
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            // Close button
+            Positioned(
+              top: 40.h,
+              right: 16.w,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.close, color: Colors.white, size: 22.sp),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Extracts imagePath and base64Image from the current upload state.
   /// Returns null for both if no photo has been captured yet.
@@ -129,27 +170,19 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
         ),
         BlocListener<InsertManualEntryTicketCubit, InsertManualEntryTicketState>(
           listener: (context, state) {
+            // Always hide any existing loading dialog first
+            LoadingDialog.hide(context);
+
             if (state is InsertManualEntryTicketLoadingState) {
               LoadingDialog.show(context, "Submitting Entry Ticket...");
             } else if (state is InsertManualEntryTicketImageUploadingState) {
-
-              LoadingDialog.hide(context);
-              LoadingDialog.show(context, "Uploading vehicle photo...");
-            } else {
-              LoadingDialog.hide(context);
-            }
-
-            if (state is InsertManualEntryTicketSuccessState) {
-              SuccessDialog.show(
-                context,
-                ticketNo: state.ticketNo,
-                plateNo: state.plate,
-              );
+              // LoadingDialog.show(context, "Uploading vehicle photo...");
+            } else if (state is InsertManualEntryTicketSuccessState) {
+              SuccessDialog.show(context);
               _numbersController.clear();
               _lettersController.clear();
               context.read<UploadImageFileCubit>().reset();
-            }
-            if (state is InsertManualEntryTicketErrorState) {
+            } else if (state is InsertManualEntryTicketErrorState) {
               CustomSnackBar.showError(context, "Submission failed: ${state.message}");
             }
           },
@@ -247,12 +280,37 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                       border: Border.all(color: AppColors.fieldBorder),
                     ),
                     child: originalPath != null
-                        ? ClipRRect(
-                      borderRadius: BorderRadius.circular(10.w),
-                      child: Image.file(
-                        File(originalPath),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
+                        ? GestureDetector(
+                      onTap: () => _openImageFullScreen(context, originalPath!),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10.w),
+                            child: Image.file(
+                              File(originalPath),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: 180.h,
+                            ),
+                          ),
+                          // Tap hint icon
+                          Positioned(
+                            bottom: 8.h,
+                            right: 8.w,
+                            child: Container(
+                              padding: EdgeInsets.all(5.w),
+                              decoration: BoxDecoration(
+                                color: Colors.black45,
+                                borderRadius: BorderRadius.circular(6.w),
+                              ),
+                              child: Icon(
+                                Icons.zoom_in_rounded,
+                                color: Colors.white,
+                                size: 16.sp,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     )
                         : Center(
@@ -344,7 +402,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                                     borderRadius: BorderRadius.circular(8.w),
                                     child: Image.file(
                                       File(platePath),
-                                      fit: BoxFit.cover,
+                                      fit: BoxFit.contain,
                                       width: double.infinity,
                                     ),
                                   )

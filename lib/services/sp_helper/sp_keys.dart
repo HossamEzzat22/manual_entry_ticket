@@ -4,9 +4,11 @@ class SharedPreferencesKeys {
   static const String userName = 'userName';
   static const String deviceID = 'deviceID';
   static const String deviceName = 'deviceName';
-
+  static const String tokenExpiryDate = 'token_expiry_date';
+  static const String refreshToken = 'refresh_token';
+  static const String refreshTokenExpiryDate = 'refresh_token_expiry_date';
+  static const String carParkId = 'car_park_id';
   static const String expireDateTime = 'expireDateTime';
-  static const String refreshToken = 'refreshToken';
   static const String expiredRefreshToken = 'expiredRefreshToken';
   static const String userId = 'userId';
   static const String username = 'username';

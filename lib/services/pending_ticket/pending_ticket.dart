@@ -14,6 +14,8 @@ class PendingTicket {
   final int attempts;
   final String? lastError;
   final String createdAt;
+  final String entrySyncTime; // ← new
+
 
   const PendingTicket({
     this.id,
@@ -26,6 +28,8 @@ class PendingTicket {
     this.attempts = 0,
     this.lastError,
     required this.createdAt,
+    required this.entrySyncTime, // ← new
+
   });
 
   PendingTicket copyWith({
@@ -45,6 +49,8 @@ class PendingTicket {
       attempts: attempts ?? this.attempts,
       lastError: lastError ?? this.lastError,
       createdAt: createdAt,
+      entrySyncTime: entrySyncTime, // ← new
+
     );
   }
 
@@ -59,7 +65,9 @@ class PendingTicket {
         'attempts': attempts,
         'lastError': lastError,
         'createdAt': createdAt,
-      };
+    'entrySyncTime': entrySyncTime, // ← new
+
+  };
 
   factory PendingTicket.fromMap(Map<String, dynamic> map) => PendingTicket(
         id: map['id'] as int?,
@@ -72,5 +80,7 @@ class PendingTicket {
         attempts: map['attempts'] as int? ?? 0,
         lastError: map['lastError'] as String?,
         createdAt: map['createdAt'] as String,
-      );
+    entrySyncTime: map['entrySyncTime'] as String? ?? '', // ← new
+
+  );
 }

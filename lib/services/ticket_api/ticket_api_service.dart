@@ -20,18 +20,24 @@ class TicketApiService {
     required String plate,
     required String ticketNumber,
     required String token,
+    required String entrySyncTime,
+
   }) async {
     // Server uses [FromForm] → must send as FormData, not JSON.
     final form = FormData.fromMap({
       "deviceId": deviceId,
       "plate": plate,
       "ticketNumber": ticketNumber,
+      "entrySyncTime": entrySyncTime,
+
     });
 
     await LogHelper.logApiRequest('POST', _insertUrl, data: {
       "deviceId": deviceId,
       "plate": plate,
       "ticketNumber": ticketNumber,
+      "entrySyncTime": entrySyncTime,
+
     });
 
     final response = await DioHelper.postData(

@@ -8,3 +8,4 @@ final class SplashLoading extends SplashState {}
 
 final class SplashLoaded extends SplashState {}
 
+final class SplashSessionValid extends SplashState {}

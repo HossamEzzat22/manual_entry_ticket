@@ -14,7 +14,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
   InsertManualEntryTicketCubit() : super(InsertManualEntryTicketInitial());
 
   // Translates C# format structure: _ticketType + "{0}{6}{1}{7}{2}{8}{3}{9}{4}{10}{5}{11}"
-  String generateTicketNumber(String carParkId) {
+  String generateTicketNumber() {
     final time = DateTime.now();
     final rand = Random();
     final r = rand.nextInt(1000).toString().padLeft(3, '0');
@@ -27,10 +27,14 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
     final yy = (time.year % 100).toString().padLeft(2, '0');
     const ticketType = "1";
     const constVal = "01";
-    // carParkId = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.carparkId);
+
+    // Now carParkId is available from login response stored in SharedPreferences
+    final carParkId = SharedPreferenceHelper.getData(
+        key: SharedPreferencesKeys.carParkId) as String? ?? '0';
 
     return "$ticketType$hh${r[0]}$mm${r[1]}$dd${r[2]}$MM${second[0]}$yy${second[1]}$constVal$carParkId";
   }
+
 
   /// Submits a ticket. The user ALWAYS sees success — if the API fails (or the
   /// image upload fails), the ticket is queued in SQLite and retried later by
@@ -47,12 +51,16 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
 
     // 1. Read device info from SharedPreferences
     final facilityId = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.facilityId) as String? ?? "0";
+    final carParkId = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.carParkId) as String? ?? "0";
+
     final deviceIdRaw = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.deviceID);
     final deviceId = int.tryParse(deviceIdRaw?.toString() ?? '') ?? 0;
     final token = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.token) as String? ?? "";
 
+    final entrySyncTime = DateTime.now().toIso8601String();
+
     // 2. Generate ticket number + combine plate fields → NNNNLLL format
-    final ticketNo = generateTicketNumber(facilityId);
+    final ticketNo = generateTicketNumber();
     final plate = "$plateNumbers$plateLetters".toUpperCase();
     final hasImage = base64Image != null && base64Image.isNotEmpty;
 
@@ -64,6 +72,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
         plate: plate,
         ticketNumber: ticketNo,
         token: token,
+        entrySyncTime: entrySyncTime,
       );
     } catch (e, stackTrace) {
       await LogHelper.logException('InsertEntryTicket failed — will queue', e, stackTrace);
@@ -97,7 +106,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
         base64Image: hasImage ? base64Image : null,
         needsInsert: true,
         needsImage: hasImage,
-        createdAt: now,
+        createdAt: now, entrySyncTime: entrySyncTime,
       ));
       await LogHelper.log('OUTBOX',
           'Queued ticket $ticketNo for retry (insert failed, plate=$plate, imageQueued=$hasImage)');
@@ -110,7 +119,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
         base64Image: base64Image,
         needsInsert: false,
         needsImage: true,
-        createdAt: now,
+        createdAt: now, entrySyncTime: entrySyncTime,
       ));
       await LogHelper.log('OUTBOX',
           'Queued image-only retry for ticket $ticketNo (insert ok, image failed)');
@@ -126,7 +135,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
       ticketNo: ticketNo,
       plate: plate,
       facilityId: int.tryParse(facilityId) ?? 0,
-      carParkId: 0,
+      carParkId: int.tryParse(carParkId) ?? 0,
       clientId: 0,
       entryTime: '',
       status: '',
@@ -140,4 +149,6 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
   void reset() {
     emit(InsertManualEntryTicketInitial());
   }
+
+
 }
