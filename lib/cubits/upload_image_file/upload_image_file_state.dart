@@ -13,10 +13,12 @@ final class UploadImageFilePickFailure extends UploadImageFileState {
 
 final class UploadImageFileCameraSuccess extends UploadImageFileState {
   final String originalImagePath;
-  final String base64Image;
+  final String base64Image; // full-resolution copy (OCR/reference)
+  final String uploadBase64; // resized copy (≤720px) used for upload
   UploadImageFileCameraSuccess({
     required this.originalImagePath,
     required this.base64Image,
+    required this.uploadBase64,
   });
 }
 
@@ -29,7 +31,8 @@ final class UploadImageFileOcrLoading extends UploadImageFileState {
 
 final class UploadImageFileOcrSuccess extends UploadImageFileState {
   final String originalImagePath;
-  final String base64Image;
+  final String base64Image; // full-resolution copy (OCR/reference)
+  final String uploadBase64; // resized copy (≤720px) used for upload
   final String plateImagePath;
   final String plateNumbers;
   final String plateLetters;
@@ -37,6 +40,7 @@ final class UploadImageFileOcrSuccess extends UploadImageFileState {
   UploadImageFileOcrSuccess({
     required this.originalImagePath,
     required this.base64Image,
+    required this.uploadBase64,
     required this.plateImagePath,
     required this.plateNumbers,
     required this.plateLetters,
@@ -49,13 +53,15 @@ final class UploadImageFileOcrSuccess extends UploadImageFileState {
 // still show the crop preview); null when no plate was detected at all.
 final class UploadImageFileOcrUnavailable extends UploadImageFileState {
   final String originalImagePath;
-  final String base64Image;
+  final String base64Image; // full-resolution copy (OCR/reference)
+  final String uploadBase64; // resized copy (≤720px) used for upload
   final String? plateImagePath;
   final String message;
 
   UploadImageFileOcrUnavailable({
     required this.originalImagePath,
     required this.base64Image,
+    required this.uploadBase64,
     required this.message,
     this.plateImagePath,
   });

@@ -1,6 +1,6 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/constants/app_colors.dart';
@@ -22,129 +22,83 @@ class AppScaffold extends StatelessWidget {
         body: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+
+              // ── Header ───────────────────────────────────────────────────
+              Container(
+                color: AppColors.darkBlue,
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Image.asset(
+
+                    SvgPicture.asset(
                       AppAssets.logo,
-                      height: 48.h,
-                      errorBuilder: (_, __, ___) => Container(
-                        height: 48.h,
-                        width: 48.h,
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.local_parking, size: 24.sp),
-                      ),
+                      height: 44.h,
                     ),
-                    Gaps.w12,
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              AppStrings.appNameAr,
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.darkBlue,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            AppStrings.appNameEn,
-                            style: TextStyle(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.darkBlue,
-                            ),
-                          ),
-                        ],
+
+                    SizedBox(width: 180.w), // ⬅️ المسافة اللي انت عايزها
+
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.5),
+                        ),
+                        borderRadius: BorderRadius.circular(6.r),
+                      ),
+                      child: Text(
+                        'PARKING',
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          color: AppColors.primary,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: Color(0xFFE2E2E2)),
+
+              // Thin copper accent line
+              Container(height: 2.h, color: AppColors.primary),
+
+              // ── Body ─────────────────────────────────────────────────────
               Expanded(child: body),
-              // Container(
-              //   height: 56.h,
-              //   color: AppColors.bottomBar,
-              //   padding: EdgeInsets.symmetric(horizontal: 16.w),
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //     children: [
-              //       Row(
-              //         children: [
-              //           Container(
-              //             width: 26.w,
-              //             height: 26.h,
-              //             decoration: const BoxDecoration(
-              //               color: AppColors.primary,
-              //               shape: BoxShape.circle,
-              //             ),
-              //             child: Center(
-              //               child: Image.asset(
-              //                 AppAssets.parkAssistLogo,
-              //                 width: 16.w,
-              //                 height: 16.h,
-              //                 color: Colors.black,
-              //                 errorBuilder: (_, __, ___) =>
-              //                     Icon(Icons.visibility, size: 15.sp),
-              //               ),
-              //             ),
-              //           ),
-              //           Gaps.w8,
-              //           Column(
-              //             mainAxisAlignment: MainAxisAlignment.center,
-              //             crossAxisAlignment: CrossAxisAlignment.start,
-              //             children: [
-              //               Text(
-              //                 AppStrings.parkAssist,
-              //                 style: TextStyle(
-              //                   color: Colors.white,
-              //                   fontWeight: FontWeight.bold,
-              //                   fontSize: 11.sp,
-              //                 ),
-              //               ),
-              //               Text(
-              //                 AppStrings.parkAssistTagline,
-              //                 style: TextStyle(
-              //                   color: Colors.white,
-              //                   fontSize: 8.sp,
-              //                   letterSpacing: 1.1,
-              //                 ),
-              //               ),
-              //             ],
-              //           ),
-              //         ],
-              //       ),
-              //       Container(
-              //         width: 30.w,
-              //         height: 30.h,
-              //         decoration: const BoxDecoration(
-              //           color: AppColors.darkBlue,
-              //           shape: BoxShape.circle,
-              //         ),
-              //         child: Center(
-              //           child: Image.asset(
-              //             AppAssets.accessibilityIcon,
-              //             width: 16.w,
-              //             height: 16.h,
-              //             color: Colors.white,
-              //             errorBuilder: (_, __, ___) =>
-              //                 Icon(Icons.accessible, color: Colors.white, size: 16.sp),
-              //           ),
-              //         ),
-              //       ),
-              //     ],
-              //   ),
-              // ),
+
+              // ── Footer ───────────────────────────────────────────────────
+              Container(
+                width: double.infinity,
+                color: AppColors.darkBlue,
+                padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${AppStrings.poweredBy} ',
+                      style: TextStyle(
+                        fontSize: 9.sp,
+                        color: Colors.white30,
+                      ),
+                    ),
+                    Image.asset(
+                      AppAssets.unifiAccessLogo,
+                      height: 16.h,
+                    ),
+                    Gaps.w4,
+                    Text(
+                      AppStrings.unifiAccess,
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

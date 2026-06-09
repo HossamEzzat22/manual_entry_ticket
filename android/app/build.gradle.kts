@@ -1,7 +1,15 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val keyProperties = Properties()
+val keyPropertiesFile = rootProject.file("key.properties")
+if (keyPropertiesFile.exists()) {
+    keyPropertiesFile.inputStream().use { keyProperties.load(it) }
 }
 
 android {
@@ -12,7 +20,7 @@ android {
     defaultConfig {
         applicationId = "com.example.manualentryticket"
 
-        minSdk = 24   // مهم جداً (حل مشاكل image_picker)
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -26,37 +34,35 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-//    testOptions {
-//        unitTests.all {
-//            it.enabled = false
-//        }
-//    }
 
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("debug")
+    signingConfigs {
+        create("release") {
+            keyAlias = keyProperties["keyAlias"] as String
+            keyPassword = keyProperties["keyPassword"] as String
+            storeFile = keyProperties["storeFile"]?.let { file(it) }
+            storePassword = keyProperties["storePassword"] as String
         }
     }
 
-    // Keep the .tflite model uncompressed so it can be memory-mapped at runtime
-    // (FileUtil.loadMappedFile fails on a compressed asset).
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
+    }
+
     androidResources {
         noCompress += "tflite"
     }
 }
 
-
 dependencies {
-
-    // Kotlin coroutines — used by the plate-detection MethodChannel handler.
-    // Added explicitly so it doesn't depend on a Flutter plugin pulling it in.
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // TensorFlow Lite (clean)
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
 
-    // CameraX (optional)
     implementation("androidx.camera:camera-core:1.3.1")
     implementation("androidx.camera:camera-camera2:1.3.1")
     implementation("androidx.camera:camera-lifecycle:1.3.1")
@@ -69,6 +75,7 @@ dependencies {
 flutter {
     source = "../.."
 }
+
 tasks.configureEach {
     if (name.contains("test", ignoreCase = true) ||
         name.contains("Test", ignoreCase = true)) {

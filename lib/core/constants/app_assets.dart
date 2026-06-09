@@ -1,5 +1,4 @@
 class AppAssets {
-  static const String logo = 'assets/images/logo.png';
-  static const String parkAssistLogo = 'assets/images/park_assist_logo.png';
-  static const String accessibilityIcon = 'assets/images/accessibility.png';
+  static const String logo = 'assets/images/altanfeethi_logo.svg';
+  static const String unifiAccessLogo = 'assets/images/Unifi.png'; // ← exact filename
 }

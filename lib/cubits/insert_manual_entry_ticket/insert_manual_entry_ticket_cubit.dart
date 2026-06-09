@@ -44,6 +44,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
     required bool isAiEnabled,
     required String? imagePath,
     required String? base64Image,
+    required String? uploadBase64,
     required String plateNumbers,
     required String plateLetters,
   }) async {
@@ -62,7 +63,13 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
     // 2. Generate ticket number + combine plate fields → NNNNLLL format
     final ticketNo = generateTicketNumber();
     final plate = "$plateNumbers$plateLetters".toUpperCase();
-    final hasImage = base64Image != null && base64Image.isNotEmpty;
+
+    // Upload the resized copy (≤720px). Fall back to the full image only if the
+    // resized one is somehow missing, so an upload is never silently dropped.
+    final imageToUpload = (uploadBase64 != null && uploadBase64.isNotEmpty)
+        ? uploadBase64
+        : base64Image;
+    final hasImage = imageToUpload != null && imageToUpload.isNotEmpty;
 
     // ── STEP 1: InsertEntryTicket ──────────────────────────────────────────
     bool inserted = false;
@@ -86,7 +93,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
         imageDone = await TicketApiService.updateEntryTicketImage(
           deviceId: deviceId,
           ticketNumber: ticketNo,
-          base64Image: base64Image,
+          base64Image: imageToUpload,
           // token: token,
         );
       } catch (e, stackTrace) {
@@ -103,7 +110,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
         deviceId: deviceId,
         plate: plate,
         ticketNumber: ticketNo,
-        base64Image: hasImage ? base64Image : null,
+        base64Image: hasImage ? imageToUpload : null,
         needsInsert: true,
         needsImage: hasImage,
         createdAt: now, entrySyncTime: entrySyncTime,
@@ -116,7 +123,7 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
         deviceId: deviceId,
         plate: plate,
         ticketNumber: ticketNo,
-        base64Image: base64Image,
+        base64Image: imageToUpload,
         needsInsert: false,
         needsImage: true,
         createdAt: now, entrySyncTime: entrySyncTime,

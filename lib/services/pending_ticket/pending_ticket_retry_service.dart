@@ -15,7 +15,7 @@ class PendingTicketRetryService {
   PendingTicketRetryService._();
   static final PendingTicketRetryService instance = PendingTicketRetryService._();
 
-  static const Duration _interval = Duration(minutes: 5);
+  static const Duration _interval = Duration(minutes: 3);
 
   Timer? _timer;
   bool _isFlushing = false;
@@ -36,12 +36,17 @@ class PendingTicketRetryService {
   /// call while one is in flight is a no-op.
   Future<void> flush() async {
     if (_isFlushing) return;
+
+    // If no token exists the user is not logged in — skip silently.
+    final token = SharedPreferenceHelper.getData(
+      key: SharedPreferencesKeys.token,
+    ) as String? ?? '';
+    if (token.isEmpty) return;
+
     _isFlushing = true;
     try {
       final pending = await PendingTicketDb.getAll();
       if (pending.isEmpty) return;
-
-      // final token = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.token) as String? ?? '';
 
       await LogHelper.log('OUTBOX', 'Retrying ${pending.length} pending ticket(s)');
       for (final ticket in pending) {
@@ -52,6 +57,11 @@ class PendingTicketRetryService {
     } finally {
       _isFlushing = false;
     }
+  }
+  /// Returns true if there are pending tickets not yet synced.
+  Future<bool> hasPendingTickets() async {
+    final pending = await PendingTicketDb.getAll();
+    return pending.isNotEmpty;
   }
 
   Future<void> _process(PendingTicket ticket) async {

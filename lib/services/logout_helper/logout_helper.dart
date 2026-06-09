@@ -1,15 +1,49 @@
 import 'package:flutter/material.dart';
 
 import '../log_helper/log_helper.dart';
+import '../pending_ticket/pending_ticket_db.dart';
+import '../pending_ticket/pending_ticket_retry_service.dart';
 import '../sp_helper/sp_helper.dart';
 import '../sp_helper/sp_keys.dart';
 
 abstract class LogoutHelper {
-  /// Shows a confirmation dialog, clears all SharedPreferences on confirm,
-  /// then navigates to the login screen removing all previous routes.
   static Future<void> logout(BuildContext context) async {
     await LogHelper.log('AUTH', 'Logout dialog shown to user');
 
+    // ── Guard: block logout if there are unsynced tickets ─────────────────
+    final pending = await PendingTicketDb.getAll();
+    if (pending.isNotEmpty) {
+      await LogHelper.log(
+        'AUTH',
+        'Logout blocked — ${pending.length} unsynced ticket(s) in queue, triggering retry flush',
+      );
+
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text("Cannot Logout Yet"),
+            content: Text(
+              "You have ${pending.length} unsubmitted ticket(s) pending please check your internet after that -->\n\n"
+                  "Please wait while we try to sync them, then try logging out again.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // Trigger an immediate retry in the background
+      PendingTicketRetryService.instance.flush();
+      return;
+    }
+
+    // ── Confirmation dialog ───────────────────────────────────────────────
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

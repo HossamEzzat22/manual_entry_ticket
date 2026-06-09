@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 
+import '../core/constants/app_assets.dart';
 import '../core/constants/app_colors.dart';
 import '../cubits/login/login_cubit.dart';
 import '../widgets/app_scaffold.dart';
@@ -10,6 +12,7 @@ import '../widgets/custom_text_field.dart';
 import '../widgets/custom_snackbar.dart';
 import '../widgets/loading_dialog.dart';
 import '../widgets/gaps.dart';
+import '../widgets/logs_bottom_sheet.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,19 +33,15 @@ class _LoginScreenState extends State<LoginScreen> {
       listener: (context, state) {
         if (state is LoginLoading) {
           LoadingDialog.show(context, "Authenticating...");
-        } else {
-          LoadingDialog.hide(context);
-        }
-
-        if (state is LoginSuccess) {
+        } else if (state is LoginSuccess) {
+          // LoadingDialog.hide(context);
           CustomSnackBar.showSuccess(
             context,
-            "Welcome back, ${(state).userName}!",
+            "Welcome back, ${state.userName}!",
           );
           Navigator.pushReplacementNamed(context, '/entry_ticket_screen');
-        }
-
-        if (state is LoginError) {
+        } else if (state is LoginError) {
+          // LoadingDialog.hide(context);
           CustomSnackBar.showError(context, state.message);
         }
       },
@@ -57,19 +56,34 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Top Image/Logo Section
                   Center(
                     child: Container(
-                      height: 100.h,
-                      width: 100.h,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
+                      height: 130.h,
+                      width: 130.h,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.4),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.15),
+                            blurRadius: 20,
+                            spreadRadius: 3,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                      child: Icon(
-                        Icons.security_rounded,
-                        size: 50.sp,
-                        color: AppColors.darkBlue,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(18),
+                        child: Padding(
+                          padding: const EdgeInsets.all(18.0),
+                          child: SvgPicture.asset(
+                            AppAssets.logo,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -140,16 +154,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   Gaps.h32,
 
-                  // Custom Login Button
-                  CustomButton(
-                    label: "LOGIN",
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        loginCubit.login();
-                      }
+                  // Custom Login Button — disabled while loading
+                  BlocBuilder<LoginCubit, LoginState>(
+                    builder: (context, state) {
+                      final isLoading = state is LoginLoading;
+                      return CustomButton(
+                        label: "LOGIN",
+                        isDisabled: context.watch<LoginCubit>().state is LoginLoading,
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            loginCubit.login();
+                          }
+                        },
+                      );
                     },
                   ),
-                  Gaps.h24,
+                  Gaps.h12,
+                  CustomButton(
+                    label: "SHARE LOGS",
+                    icon: Icons.share_outlined,
+                    isPrimary: false,
+                    onPressed: () => LogsBottomSheet.show(context),
+                  ),
 
                 ],
               ),

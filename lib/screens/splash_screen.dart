@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
+import '../core/constants/app_assets.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_strings.dart';
 import '../cubits/splash/splash_cubit.dart';
@@ -19,7 +21,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Trigger the 2-second delay on launch
     context.read<SplashCubit>().startSplashDelay();
   }
 
@@ -32,75 +33,79 @@ class _SplashScreenState extends State<SplashScreen> {
         } else if (state is SplashSessionValid) {
           Navigator.pushReplacementNamed(context, '/entry_ticket_screen');
         }
-      },
+        },
       child: Scaffold(
         backgroundColor: AppColors.darkBlue,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Beautiful branded emblem with airport style
-              Container(
-                width: 100.w,
-                height: 100.w,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 5,
+        body: Column(
+          children: [
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+
+                    // ── Logo — no container, raw SVG ─────────────────────
+                    SvgPicture.asset(
+                      AppAssets.logo,
+                      width: 220.w,
+                      fit: BoxFit.contain,
+                    ),
+                    Gaps.h32,
+
+                    // ── Tagline ──────────────────────────────────────────
+                    Text(
+                      AppStrings.parkAssistTagline,
+                      style: TextStyle(
+                        color: Colors.white38,
+                        fontSize: 9.sp,
+                        letterSpacing: 2.5,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    Gaps.h32,
+
+                    // ── Loading ──────────────────────────────────────────
+                    SpinKitDoubleBounce(
+                      color: AppColors.primary,
+                      size: 36.sp,
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Icon(
-                    Icons.local_parking_rounded,
-                    size: 56.sp,
-                    color: AppColors.darkBlue,
+              ),
+            ),
+
+            // ── Footer ──────────────────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.only(bottom: 28.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '${AppStrings.poweredBy} ',
+                    style: TextStyle(
+                      fontSize: 9.sp,
+                      color: Colors.white30,
+                    ),
                   ),
-                ),
+                  Image.asset(
+                    AppAssets.unifiAccessLogo,
+                    height: 16.h,
+                  ),
+                  Gaps.w4,
+                  Text(
+                    AppStrings.unifiAccess,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
               ),
-              Gaps.h32,
-              Text(
-                AppStrings.appNameEn,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              Gaps.h8,
-              Text(
-                AppStrings.appNameAr,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Gaps.h4,
-              Text(
-                AppStrings.parkAssistTagline,
-                style: TextStyle(
-                  color: AppColors.subtitleText,
-                  fontSize: 10.sp,
-                  letterSpacing: 2.0,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 80),
-              // Premium modern loading animation
-              SpinKitDoubleBounce(
-                color: AppColors.primary,
-                size: 40.sp,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

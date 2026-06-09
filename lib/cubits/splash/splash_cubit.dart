@@ -21,9 +21,9 @@ class SplashCubit extends Cubit<SplashState> {
     final isValid = await _hasValidSession();
 
     if (isValid) {
-      emit(SplashSessionValid()); // → go directly to entry ticket screen
+      emit(SplashSessionValid());
     } else {
-      emit(SplashLoaded()); // → go to login screen
+      emit(SplashLoaded());
     }
   }
 

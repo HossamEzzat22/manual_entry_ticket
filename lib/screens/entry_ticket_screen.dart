@@ -126,15 +126,15 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
 
   /// Extracts imagePath and base64Image from the current upload state.
   /// Returns null for both if no photo has been captured yet.
-  ({String? imagePath, String? base64Image}) _getPhotoData(UploadImageFileState uploadState) {
+  ({String? imagePath, String? base64Image, String? uploadBase64}) _getPhotoData(UploadImageFileState uploadState) {
     if (uploadState is UploadImageFileCameraSuccess) {
-      return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image);
+      return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image, uploadBase64: uploadState.uploadBase64);
     } else if (uploadState is UploadImageFileOcrSuccess) {
-      return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image);
+      return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image, uploadBase64: uploadState.uploadBase64);
     } else if (uploadState is UploadImageFileOcrUnavailable) {
-      return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image);
+      return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image, uploadBase64: uploadState.uploadBase64);
     }
-    return (imagePath: null, base64Image: null);
+    return (imagePath: null, base64Image: null, uploadBase64: null);
   }
 
   /// Builds the Manual Entry Ticket screen UI.
@@ -549,6 +549,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                             isAiEnabled: isAiEnabled,
                             imagePath: photoData.imagePath,
                             base64Image: photoData.base64Image,
+                            uploadBase64: photoData.uploadBase64,
                             plateNumbers: _numbersController.text.trim(),
                             plateLetters: _lettersController.text.trim(),
                           );
