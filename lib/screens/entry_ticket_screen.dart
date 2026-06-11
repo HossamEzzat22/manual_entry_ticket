@@ -4,13 +4,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:manual_entry_ticket/l10n/app_localizations.dart';
 
 import '../core/constants/app_colors.dart';
 import '../cubits/app_settings/app_settings_cubit.dart';
 import '../cubits/insert_manual_entry_ticket/insert_manual_entry_ticket_cubit.dart';
 import '../cubits/upload_image_file/upload_image_file_cubit.dart';
 import '../services/logout_helper/logout_helper.dart';
-import '../services/sp_helper/sp_helper.dart';
 import '../widgets/app_scaffold.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
@@ -32,12 +32,6 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
   final TextEditingController _numbersController = TextEditingController();
   final TextEditingController _lettersController = TextEditingController();
 
-
-
-  /// Initializes the screen state and attaches listeners to:
-  /// - Prevent plate numbers from starting with '0'.
-  /// - Convert plate letters to uppercase.
-  /// - Filter plate letters so only allowed Saudi plate characters remain.
   @override
   void initState() {
     super.initState();
@@ -73,15 +67,13 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
     });
   }
 
-
-  /// Releases all TextEditingController resources and removes listeners
-  /// when the screen is disposed to prevent memory leaks.
   @override
   void dispose() {
     _numbersController.dispose();
     _lettersController.dispose();
     super.dispose();
   }
+
   void _openImageFullScreen(BuildContext context, String imagePath) {
     showDialog(
       context: context,
@@ -91,7 +83,6 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
         insetPadding: EdgeInsets.zero,
         child: Stack(
           children: [
-            // Pinch-to-zoom image
             InteractiveViewer(
               minScale: 0.5,
               maxScale: 5.0,
@@ -102,7 +93,6 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                 ),
               ),
             ),
-            // Close button
             Positioned(
               top: 40.h,
               right: 16.w,
@@ -124,9 +114,8 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
     );
   }
 
-  /// Extracts imagePath and base64Image from the current upload state.
-  /// Returns null for both if no photo has been captured yet.
-  ({String? imagePath, String? base64Image, String? uploadBase64}) _getPhotoData(UploadImageFileState uploadState) {
+  ({String? imagePath, String? base64Image, String? uploadBase64}) _getPhotoData(
+      UploadImageFileState uploadState) {
     if (uploadState is UploadImageFileCameraSuccess) {
       return (imagePath: uploadState.originalImagePath, base64Image: uploadState.base64Image, uploadBase64: uploadState.uploadBase64);
     } else if (uploadState is UploadImageFileOcrSuccess) {
@@ -137,55 +126,43 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
     return (imagePath: null, base64Image: null, uploadBase64: null);
   }
 
-  /// Builds the Manual Entry Ticket screen UI.
-  ///
-  /// Responsibilities:
-  /// - Listens to image upload and OCR state changes.
-  /// - Displays loading, success, and error dialogs.
-  /// - Allows the user to capture a vehicle photo.
-  /// - Displays the captured image and AI-detected plate preview.
-  /// - Collects plate number and plate letters input.
-  /// - Validates user input.
-  /// - Submits the entry ticket request.
-  /// - Provides an option to share application logs.
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return MultiBlocListener(
       listeners: [
         BlocListener<UploadImageFileCubit, UploadImageFileState>(
           listener: (context, state) {
             if (state is UploadImageFileOcrLoading) {
-              LoadingDialog.show(context, "AI OCR: Extracting plate details...");
+              LoadingDialog.show(context, l10n.aiOcrLoading);
             } else if (state is UploadImageFileOcrSuccess) {
               LoadingDialog.hide(context);
               _numbersController.text = state.plateNumbers;
               _lettersController.text = state.plateLetters;
-              CustomSnackBar.showSuccess(context, "AI Auto-detection: License plate populated! \n Please review and correct if needed.");
+              CustomSnackBar.showSuccess(context, l10n.aiOcrSuccess);
             } else if (state is UploadImageFileOcrUnavailable) {
               LoadingDialog.hide(context);
               CustomSnackBar.showInfo(context, state.message);
             } else if (state is UploadImageFilePickFailure) {
               LoadingDialog.hide(context);
-              CustomSnackBar.showError(context, "Failed to capture: ${state.error}");
+              CustomSnackBar.showError(context, l10n.captureFailure(state.error));
             }
           },
         ),
         BlocListener<InsertManualEntryTicketCubit, InsertManualEntryTicketState>(
           listener: (context, state) {
-            // Always hide any existing loading dialog first
             LoadingDialog.hide(context);
 
             if (state is InsertManualEntryTicketLoadingState) {
-              LoadingDialog.show(context, "Submitting Entry Ticket...");
-            } else if (state is InsertManualEntryTicketImageUploadingState) {
-              // LoadingDialog.show(context, "Uploading vehicle photo...");
+              LoadingDialog.show(context, l10n.submittingTicket);
             } else if (state is InsertManualEntryTicketSuccessState) {
               SuccessDialog.show(context);
               _numbersController.clear();
               _lettersController.clear();
               context.read<UploadImageFileCubit>().reset();
             } else if (state is InsertManualEntryTicketErrorState) {
-              CustomSnackBar.showError(context, "Submission failed: ${state.message}");
+              CustomSnackBar.showError(context, l10n.submissionFailed(state.message));
             }
           },
         ),
@@ -203,7 +180,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Manual Ticket Entry",
+                    l10n.manualTicketEntry,
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
@@ -213,7 +190,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                   Row(
                     children: [
                       Text(
-                        "Automatic AI",
+                        l10n.automaticAi,
                         style: TextStyle(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w600,
@@ -238,21 +215,21 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
               ),
               const Divider(height: 20, color: Color(0xFFE2E2E2)),
 
-              // ── Step 1: Take Photo Button ─────────────────────────────────
+              // ── Take Photo ───────────────────────────────────────────────
               CustomButton(
-                label: "TAKE PHOTO",
+                label: l10n.takePhoto,
                 icon: Icons.photo_camera,
                 isPrimary: true,
                 onPressed: () {
                   final isAiEnabled = context.read<AppSettingsCubit>().state.isAiAnalysisEnabled;
-                  context.read<UploadImageFileCubit>().capturePhoto(isAiEnabled: isAiEnabled);
+                  context.read<UploadImageFileCubit>().capturePhoto(isAiEnabled: isAiEnabled, l10n: l10n);
                 },
               ),
               Gaps.h16,
 
-              // ── Step 2: Captured Photo Box ────────────────────────────────
+              // ── Captured Photo Box ───────────────────────────────────────
               Text(
-                "Captured Photo",
+                l10n.capturedPhoto,
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.w600,
@@ -295,7 +272,6 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                               height: 180.h,
                             ),
                           ),
-                          // Tap hint icon
                           Positioned(
                             bottom: 8.h,
                             right: 8.w,
@@ -326,7 +302,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                           ),
                           Gaps.h8,
                           Text(
-                            "No photo captured",
+                            l10n.noPhotoCaptured,
                             style: TextStyle(
                               fontSize: 11.sp,
                               color: Colors.grey[400],
@@ -340,7 +316,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
               ),
               Gaps.h24,
 
-              // ── Step 3: OCR Result Section ────────────────────────────────
+              // ── OCR Result Section ───────────────────────────────────────
               BlocBuilder<AppSettingsCubit, AppSettingsState>(
                 builder: (context, settingsState) {
                   final bool aiEnabled = settingsState.isAiAnalysisEnabled;
@@ -348,7 +324,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        aiEnabled ? "AI Plate Detection Result" : "Plate Detection Result",
+                        aiEnabled ? l10n.aiPlateDetectionResult : l10n.plateDetectionResult,
                         style: TextStyle(
                           fontSize: 11.sp,
                           fontWeight: FontWeight.w600,
@@ -356,8 +332,6 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                         ),
                       ),
                       Gaps.h8,
-
-                      // Plate crop preview — only when AI is enabled
                       if (aiEnabled)
                         BlocBuilder<UploadImageFileCubit, UploadImageFileState>(
                           builder: (context, fileState) {
@@ -390,7 +364,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                                         ),
                                         Gaps.h8,
                                         Text(
-                                          "Detecting plate...",
+                                          l10n.detectingPlate,
                                           style: TextStyle(
                                             fontSize: 9.sp,
                                             color: AppColors.subtitleText,
@@ -419,7 +393,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                                         ),
                                         Gaps.h4,
                                         Text(
-                                          "Plate crop pending",
+                                          l10n.plateCropPending,
                                           style: TextStyle(
                                             fontSize: 9.sp,
                                             color: Colors.grey[400],
@@ -439,7 +413,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                 },
               ),
 
-              // ── Step 4: Plate Number Form ─────────────────────────────────
+              // ── Plate Number Form ────────────────────────────────────────
               Form(
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -447,7 +421,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      "Plate Number",
+                      l10n.plateNumber,
                       style: TextStyle(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.w600,
@@ -461,8 +435,8 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                         Expanded(
                           child: CustomTextField(
                             controller: _numbersController,
-                            labelText: "Digits (Max 4)",
-                            hintText: "1234",
+                            labelText: l10n.digitsLabel,
+                            hintText: l10n.digitsHint,
                             keyboardType: TextInputType.number,
                             maxLength: 4,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -472,8 +446,8 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                               letterSpacing: 2,
                             ),
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) return "Required";
-                              if (val.startsWith('0')) return "Cannot start with 0";
+                              if (val == null || val.trim().isEmpty) return l10n.required;
+                              if (val.startsWith('0')) return l10n.cannotStartWithZero;
                               return null;
                             },
                           ),
@@ -482,8 +456,8 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                         Expanded(
                           child: CustomTextField(
                             controller: _lettersController,
-                            labelText: "Saudi Letters (Max 3)",
-                            hintText: "RSD",
+                            labelText: l10n.lettersLabel,
+                            hintText: l10n.lettersHint,
                             keyboardType: TextInputType.text,
                             maxLength: 3,
                             textCapitalization: TextCapitalization.characters,
@@ -496,8 +470,8 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                               letterSpacing: 4,
                             ),
                             validator: (val) {
-                              if (val == null || val.trim().isEmpty) return "Required";
-                              if (val.trim().length != 3) return "Must be exactly 3 letters";
+                              if (val == null || val.trim().isEmpty) return l10n.required;
+                              if (val.trim().length != 3) return l10n.mustBeExactly3Letters;
                               return null;
                             },
                           ),
@@ -512,7 +486,7 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                         borderRadius: BorderRadius.circular(6.w),
                       ),
                       child: Text(
-                        "Allowed Letters: A, B, D, E, G, H, J, K, L, N, R, S, T, U, V, W, X, Z",
+                        l10n.allowedLetters,
                         style: TextStyle(
                           fontSize: 9.sp,
                           color: Colors.grey[700],
@@ -524,21 +498,16 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
 
                     // ── Submit ───────────────────────────────────────────────
                     CustomButton(
-                      label: "SUBMIT ENTRY TICKET",
+                      label: l10n.submitEntryTicket,
                       onPressed: () {
                         final isAiEnabled =
                             context.read<AppSettingsCubit>().state.isAiAnalysisEnabled;
                         final uploadState =
                             context.read<UploadImageFileCubit>().state;
-
                         final photoData = _getPhotoData(uploadState);
 
-                        // Photo is required in BOTH AI-on and AI-off modes
                         if (photoData.imagePath == null) {
-                          CustomSnackBar.showError(
-                            context,
-                            "Vehicle photo is required. Please capture a photo first.",
-                          );
+                          CustomSnackBar.showError(context, l10n.photoRequired);
                           return;
                         }
 
@@ -560,14 +529,14 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
 
                     // ── Share Logs ───────────────────────────────────────────
                     CustomButton(
-                      label: "SHARE LOGS",
+                      label: l10n.shareLogs,
                       icon: Icons.share_outlined,
                       isPrimary: false,
                       onPressed: () => LogsBottomSheet.show(context),
                     ),
                     Gaps.h12,
                     CustomButton(
-                      label: "LOGOUT",
+                      label: l10n.logout,
                       icon: Icons.logout_rounded,
                       color: Colors.red,
                       isPrimary: false,

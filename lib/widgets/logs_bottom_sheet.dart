@@ -2,15 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:manual_entry_ticket/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../services/log_helper/log_helper.dart';
 
-
 class LogsBottomSheet extends StatefulWidget {
   const LogsBottomSheet._();
 
-  /// Call this to open the bottom sheet from anywhere.
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet(
       context: context,
@@ -27,7 +26,7 @@ class LogsBottomSheet extends StatefulWidget {
 class _LogsBottomSheetState extends State<LogsBottomSheet> {
   List<File> _logFiles = [];
   bool _isLoading = true;
-  String? _sharingFilePath; // tracks which file is currently being shared
+  String? _sharingFilePath;
 
   @override
   void initState() {
@@ -46,7 +45,7 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
   }
 
   Future<void> _shareFile(File file) async {
-    if (_sharingFilePath != null) return; // prevent double-tap
+    if (_sharingFilePath != null) return;
     setState(() => _sharingFilePath = file.path);
     try {
       await Share.shareXFiles(
@@ -57,9 +56,10 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
     } catch (e, st) {
       await LogHelper.logException('Failed to share log file', e, st);
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to share: $e'),
+            content: Text(l10n.failedToShare(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -69,10 +69,9 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
     }
   }
 
-  /// Extracts a readable date label from filename e.g. "logs_2026-06-04.txt" → "Wed, Jun 4 2026"
   String _formatFileName(File file) {
     try {
-      final name = file.uri.pathSegments.last; // logs_2026-06-04.txt
+      final name = file.uri.pathSegments.last;
       final datePart = name.replaceAll('logs_', '').replaceAll('.txt', '');
       final date = DateFormat('yyyy-MM-dd').parse(datePart);
       final isToday = DateFormat('yyyy-MM-dd').format(DateTime.now()) == datePart;
@@ -83,7 +82,6 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
     }
   }
 
-  /// Returns file size as a readable string e.g. "12 KB"
   String _formatFileSize(File file) {
     try {
       final bytes = file.lengthSync();
@@ -95,7 +93,6 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
     }
   }
 
-  /// True if the file is from today
   bool _isToday(File file) {
     try {
       final name = file.uri.pathSegments.last;
@@ -108,6 +105,8 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.55,
       minChildSize: 0.35,
@@ -127,7 +126,6 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
           ),
           child: Column(
             children: [
-              // ── Handle ───────────────────────────────────────────────────
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 12.h),
                 child: Container(
@@ -139,8 +137,6 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
                   ),
                 ),
               ),
-
-              // ── Title ────────────────────────────────────────────────────
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Row(
@@ -148,7 +144,7 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
                     Icon(Icons.description_outlined, size: 20.sp, color: Colors.grey[700]),
                     SizedBox(width: 8.w),
                     Text(
-                      'Log Files',
+                      l10n.logFiles,
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
@@ -165,8 +161,6 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
                 ),
               ),
               Divider(height: 20.h, color: const Color(0xFFE2E2E2)),
-
-              // ── Content ──────────────────────────────────────────────────
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
@@ -178,7 +172,7 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
                       Icon(Icons.inbox_outlined, size: 48.sp, color: Colors.grey[300]),
                       SizedBox(height: 12.h),
                       Text(
-                        'No log files found',
+                        l10n.noLogFilesFound,
                         style: TextStyle(fontSize: 13.sp, color: Colors.grey[400]),
                       ),
                     ],
@@ -226,9 +220,7 @@ class _LogsBottomSheetState extends State<LogsBottomSheet> {
                         _formatFileName(file),
                         style: TextStyle(
                           fontSize: 13.sp,
-                          fontWeight: today
-                              ? FontWeight.w600
-                              : FontWeight.w400,
+                          fontWeight: today ? FontWeight.w600 : FontWeight.w400,
                           color: Colors.grey[850],
                         ),
                       ),

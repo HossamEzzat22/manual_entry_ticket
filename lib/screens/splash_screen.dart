@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:manual_entry_ticket/l10n/app_localizations.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/constants/app_colors.dart';
-import '../core/constants/app_strings.dart';
 import '../cubits/splash/splash_cubit.dart';
 import '../widgets/gaps.dart';
 
@@ -26,6 +26,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return BlocListener<SplashCubit, SplashState>(
       listener: (context, state) {
         if (state is SplashLoaded) {
@@ -33,7 +35,7 @@ class _SplashScreenState extends State<SplashScreen> {
         } else if (state is SplashSessionValid) {
           Navigator.pushReplacementNamed(context, '/entry_ticket_screen');
         }
-        },
+      },
       child: Scaffold(
         backgroundColor: AppColors.darkBlue,
         body: Column(
@@ -43,18 +45,14 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
-                    // ── Logo — no container, raw SVG ─────────────────────
                     SvgPicture.asset(
                       AppAssets.logo,
                       width: 220.w,
                       fit: BoxFit.contain,
                     ),
                     Gaps.h32,
-
-                    // ── Tagline ──────────────────────────────────────────
                     Text(
-                      AppStrings.parkAssistTagline,
+                      l10n.parkAssistTagline,
                       style: TextStyle(
                         color: Colors.white38,
                         fontSize: 9.sp,
@@ -63,8 +61,6 @@ class _SplashScreenState extends State<SplashScreen> {
                       ),
                     ),
                     Gaps.h32,
-
-                    // ── Loading ──────────────────────────────────────────
                     SpinKitDoubleBounce(
                       color: AppColors.primary,
                       size: 36.sp,
@@ -73,8 +69,6 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
               ),
             ),
-
-            // ── Footer ──────────────────────────────────────────────────
             Padding(
               padding: EdgeInsets.only(bottom: 28.h),
               child: Row(
@@ -82,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    '${AppStrings.poweredBy} ',
+                    '${l10n.poweredBy} ',
                     style: TextStyle(
                       fontSize: 9.sp,
                       color: Colors.white30,
@@ -94,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   Gaps.w4,
                   Text(
-                    AppStrings.unifiAccess,
+                    l10n.unifiAccess,
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.bold,

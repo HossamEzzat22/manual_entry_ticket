@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:manual_entry_ticket/l10n/app_localizations.dart';
 import '../core/constants/app_colors.dart';
 
 class SuccessDialog {
@@ -10,7 +11,6 @@ class SuccessDialog {
       builder: (context) => const _SuccessDialogContent(),
     );
 
-    // Auto-dismiss after 2 seconds
     Future.delayed(const Duration(seconds: 2), () {
       if (context.mounted) Navigator.of(context).pop();
     });
@@ -45,6 +45,8 @@ class _SuccessDialogContentState extends State<_SuccessDialogContent>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16.r),
@@ -54,12 +56,11 @@ class _SuccessDialogContentState extends State<_SuccessDialogContent>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Green circle with checkmark
             Container(
               width: 64.w,
               height: 64.w,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
+              decoration: const BoxDecoration(
+                color: Color(0xFFE8F5E9),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -69,10 +70,8 @@ class _SuccessDialogContentState extends State<_SuccessDialogContent>
               ),
             ),
             SizedBox(height: 16.h),
-
-            // Title
             Text(
-              "Ticket inserted successfully",
+              l10n.ticketInsertedSuccess,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16.sp,
@@ -81,29 +80,25 @@ class _SuccessDialogContentState extends State<_SuccessDialogContent>
               ),
             ),
             SizedBox(height: 4.h),
-
-            // Subtitle
             Text(
-              "Closing automatically…",
+              l10n.closingAutomatically,
               style: TextStyle(
                 fontSize: 12.sp,
                 color: Colors.black45,
               ),
             ),
             SizedBox(height: 16.h),
-
-            // Countdown progress bar (drains left to right)
             AnimatedBuilder(
               animation: _barController,
               builder: (context, _) {
                 return ClipRRect(
                   borderRadius: BorderRadius.circular(4.r),
                   child: LinearProgressIndicator(
-                    value: 1.0 - _barController.value, // drains
+                    value: 1.0 - _barController.value,
                     minHeight: 4.h,
                     backgroundColor: Colors.black12,
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF0F6E56), // AppColors.primary teal
+                      Color(0xFF0F6E56),
                     ),
                   ),
                 );

@@ -21,4 +21,10 @@ class SharedPreferencesKeys {
   
   // Daily logs key
   static const String logs = 'daily_logs';
+
+  static const String appLanguage = 'app_language';
+
+  static const String languageCode = 'languageCode';
+
 }
+

@@ -4,7 +4,8 @@ import 'gaps.dart';
 
 class CustomSnackBar {
   static void showError(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context)..clearSnackBars() // ← add this
+      ..showSnackBar(
       SnackBar(
         content: Row(
           children: [
@@ -26,7 +27,7 @@ class CustomSnackBar {
   }
 
   static void showInfo(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
       SnackBar(
         content: Row(
           children: [
@@ -48,7 +49,7 @@ class CustomSnackBar {
   }
 
   static void showSuccess(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(context)..clearSnackBars()..showSnackBar(
       SnackBar(
         content: Row(
           children: [

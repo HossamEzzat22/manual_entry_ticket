@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:manual_entry_ticket/l10n/app_localizations.dart';
 
 import '../log_helper/log_helper.dart';
 import '../pending_ticket/pending_ticket_db.dart';
@@ -8,6 +9,8 @@ import '../sp_helper/sp_keys.dart';
 
 abstract class LogoutHelper {
   static Future<void> logout(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
+
     await LogHelper.log('AUTH', 'Logout dialog shown to user');
 
     // ── Guard: block logout if there are unsynced tickets ─────────────────
@@ -23,15 +26,12 @@ abstract class LogoutHelper {
           context: context,
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
-            title: const Text("Cannot Logout Yet"),
-            content: Text(
-              "You have ${pending.length} unsubmitted ticket(s) pending please check your internet after that -->\n\n"
-                  "Please wait while we try to sync them, then try logging out again.",
-            ),
+            title: Text(l10n.cannotLogoutYet),
+            content: Text(l10n.pendingTicketsMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text("OK"),
+                child: Text(l10n.ok),
               ),
             ],
           ),
@@ -47,18 +47,18 @@ abstract class LogoutHelper {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to logout?"),
+        title: Text(l10n.logoutTitle),
+        content: Text(l10n.logoutMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text("Cancel"),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(
-              "Logout",
-              style: TextStyle(color: Colors.red),
+            child: Text(
+              l10n.logout,
+              style: const TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -89,13 +89,23 @@ abstract class LogoutHelper {
       await SharedPreferenceHelper.removeData(key: SharedPreferencesKeys.deviceName);
       await SharedPreferenceHelper.removeData(key: SharedPreferencesKeys.carParkId);
 
-      await LogHelper.log('AUTH', 'All session data cleared successfully — navigating to login');
+      await LogHelper.log(
+        'AUTH',
+        'All session data cleared successfully — navigating to login',
+      );
     } catch (e, stackTrace) {
-      await LogHelper.logException('Failed to clear session data during logout', e, stackTrace);
+      await LogHelper.logException(
+        'Failed to clear session data during logout',
+        e,
+        stackTrace,
+      );
     }
 
     if (context.mounted) {
-      Navigator.of(context).pushNamedAndRemoveUntil('/login_screen', (route) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/login_screen',
+            (route) => false,
+      );
     }
   }
 }

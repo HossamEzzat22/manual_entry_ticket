@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:manual_entry_ticket/l10n/app_localizations.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/constants/app_colors.dart';
@@ -24,24 +25,36 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
+  bool _isDialogShowing = false; // ← add this
+
 
   @override
   Widget build(BuildContext context) {
     final loginCubit = context.read<LoginCubit>();
+    final l10n = AppLocalizations.of(context)!;
 
     return BlocListener<LoginCubit, LoginState>(
       listener: (context, state) {
         if (state is LoginLoading) {
-          LoadingDialog.show(context, "Authenticating...");
+
+          LoadingDialog.show(context, l10n.authenticating);
         } else if (state is LoginSuccess) {
-          // LoadingDialog.hide(context);
+          if (_isDialogShowing) {
+            _isDialogShowing = false;
+            LoadingDialog.hide(context);
+          }
+
           CustomSnackBar.showSuccess(
             context,
-            "Welcome back, ${state.userName}!",
+            l10n.welcomeBack(state.userName),
           );
           Navigator.pushReplacementNamed(context, '/entry_ticket_screen');
         } else if (state is LoginError) {
-          // LoadingDialog.hide(context);
+          if (_isDialogShowing) {
+            _isDialogShowing = false;
+            LoadingDialog.hide(context);
+          }
+
           CustomSnackBar.showError(context, state.message);
         }
       },
@@ -89,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   Gaps.h24,
                   Text(
-                    "Sign In",
+                    l10n.signIn,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 22.sp,
@@ -98,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   Text(
-                    "Access the manual cashier portal",
+                    l10n.accessPortal,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15.sp,
@@ -107,36 +120,38 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   Gaps.h32,
 
-                  // Email Custom Field
+                  // Email
                   CustomTextField(
                     controller: loginCubit.emailController,
-                    labelText: "Email",
-                    hintText: "example@domain.com",
+                    labelText: l10n.email,
+                    hintText: l10n.emailHint,
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: const Icon(Icons.email_outlined),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
-                        return "Email is required";
+                        return l10n.emailRequired;
                       }
                       final emailRegex = RegExp(r'^[\w.-]+@[\w.-]+\.\w{2,}$');
                       if (!emailRegex.hasMatch(val.trim())) {
-                        return "Enter a valid email (e.g. example@domain.com)";
+                        return l10n.emailInvalid;
                       }
                       return null;
                     },
                   ),
                   Gaps.h16,
 
-                  // Password Custom Field
+                  // Password
                   CustomTextField(
                     controller: loginCubit.passwordController,
-                    labelText: "Password",
-                    hintText: "Enter password",
+                    labelText: l10n.password,
+                    hintText: l10n.passwordHint,
                     obscureText: !_isPasswordVisible,
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _isPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                         size: 20.sp,
                       ),
                       onPressed: () {
@@ -147,23 +162,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     validator: (val) {
                       if (val == null || val.trim().isEmpty) {
-                        return "Password is required";
+                        return l10n.passwordRequired;
                       }
                       return null;
                     },
                   ),
                   Gaps.h32,
 
-                  // Custom Login Button — disabled while loading
+                  // Login Button
                   BlocBuilder<LoginCubit, LoginState>(
                     builder: (context, state) {
-                      final isLoading = state is LoginLoading;
                       return CustomButton(
-                        label: "LOGIN",
-                        isDisabled: context.watch<LoginCubit>().state is LoginLoading,
+                        label: l10n.loginButton,
+                        isDisabled: state is LoginLoading,
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            loginCubit.login();
+                            loginCubit.login(l10n);
                           }
                         },
                       );
@@ -171,12 +185,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   Gaps.h12,
                   CustomButton(
-                    label: "SHARE LOGS",
+                    label: l10n.shareLogs,
                     icon: Icons.share_outlined,
                     isPrimary: false,
                     onPressed: () => LogsBottomSheet.show(context),
                   ),
-
                 ],
               ),
             ),

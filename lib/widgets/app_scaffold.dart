@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:manual_entry_ticket/l10n/app_localizations.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/constants/app_colors.dart';
-import '../core/constants/app_strings.dart';
+import '../cubits/language/language_cubit.dart';
 import 'gaps.dart';
 
 class AppScaffold extends StatelessWidget {
-  const AppScaffold({required this.body, super.key});
+  const AppScaffold({required this.body, this.showLanguageToggle = true, super.key});
 
   final Widget body;
+  final bool showLanguageToggle;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () => FocusScope.of(context).unfocus(),
@@ -36,7 +41,44 @@ class AppScaffold extends StatelessWidget {
                       height: 44.h,
                     ),
 
-                    SizedBox(width: 180.w), // ⬅️ المسافة اللي انت عايزها
+                    const Spacer(),
+
+                    // ── Language Toggle Button ────────────────────────────
+                    if (showLanguageToggle)
+                      GestureDetector(
+                        onTap: () => context.read<LanguageCubit>().toggleLanguage(),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: AppColors.primary.withOpacity(0.7),
+                            ),
+                            borderRadius: BorderRadius.circular(6.r),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.language,
+                                color: AppColors.primary,
+                                size: 13.sp,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                l10n.changeLanguage,
+                                style: TextStyle(
+                                  fontSize: 9.sp,
+                                  color: AppColors.primary,
+                                  letterSpacing: 0.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    SizedBox(width: 8.w),
 
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
@@ -47,7 +89,7 @@ class AppScaffold extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6.r),
                       ),
                       child: Text(
-                        'PARKING',
+                        l10n.parking,
                         style: TextStyle(
                           fontSize: 9.sp,
                           color: AppColors.primary,
@@ -76,7 +118,7 @@ class AppScaffold extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      '${AppStrings.poweredBy} ',
+                      '${l10n.poweredBy} ',
                       style: TextStyle(
                         fontSize: 9.sp,
                         color: Colors.white30,
@@ -88,7 +130,7 @@ class AppScaffold extends StatelessWidget {
                     ),
                     Gaps.w4,
                     Text(
-                      AppStrings.unifiAccess,
+                      l10n.unifiAccess,
                       style: TextStyle(
                         fontSize: 11.sp,
                         fontWeight: FontWeight.bold,

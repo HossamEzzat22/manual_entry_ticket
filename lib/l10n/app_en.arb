@@ -1,0 +1,103 @@
+{
+  "@@locale": "en",
+
+  "appNameEn": "ALTANFEETHI",
+  "parkAssistTagline": "PREMIUM PARKING MANAGEMENT",
+  "poweredBy": "Powered by",
+  "unifiAccess": "UnifiAccess",
+  "parking": "PARKING",
+
+  "signIn": "Sign In",
+  "accessPortal": "Access the manual cashier portal",
+  "email": "Email",
+  "emailHint": "example@domain.com",
+  "emailRequired": "Email is required",
+  "emailInvalid": "Enter a valid email (e.g. example@domain.com)",
+  "password": "Password",
+  "passwordHint": "Enter password",
+  "passwordRequired": "Password is required",
+  "loginButton": "LOGIN",
+  "enterEmailPassword": "Please enter your email and password.",
+  "notAuthorizedCashier": "Your account is not authorized as a Manual Cashier. Please contact your administrator.",
+  "noRegisteredDevices": "No device is registered to your account. Please contact your administrator.",
+  "incorrectEmailPassword": "Incorrect email or password. Please try again.",
+  "accountInactive": "Your account was not found or is inactive. Please contact your administrator.",
+  "serverError": "Server error. Please try again later or contact support.",
+  "loginFailed": "Login failed. Please try again.",
+  "sessionExpired": "Session expired. Please log in again.",
+  "accessDenied": "Access denied. You are not authorized to use this app.",
+  "serverNotFound": "Server not found. Please check your connection.",
+  "noInternet": "No internet connection. Please check your network and try again.",
+  "loginErrorGeneric": "Something went wrong. Please try again.",
+  "shareLogs": "SHARE LOGS",
+  "authenticating": "Authenticating...",
+  "welcomeBack": "Welcome back, {name}!",
+  "@welcomeBack": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "manualTicketEntry": "Manual Ticket Entry",
+  "automaticAi": "Automatic AI",
+  "takePhoto": "TAKE PHOTO",
+  "capturedPhoto": "Captured Photo",
+  "noPhotoCaptured": "No photo captured",
+  "aiPlateDetectionResult": "AI Plate Detection Result",
+  "plateDetectionResult": "Plate Detection Result",
+  "detectingPlate": "Detecting plate...",
+  "plateCropPending": "Plate crop pending",
+  "cameraCaptureCanceled": "Camera capture canceled",
+  "failedToProcessPhoto": "Failed to process captured photo",
+  "plateDetectionFailed": "Plate detection failed — please enter the plate manually.",
+  "plateDetectionError": "Could not detect a plate in this photo. Please take a clearer photo or enter it manually.",
+  "ocrPlateNotReadable": "Could not read the plate — please enter it manually.",
+  "plateNumber": "Plate Number",
+  "digitsLabel": "Digits (Max 4)",
+  "digitsHint": "1234",
+  "lettersLabel": "Saudi Letters (Max 3)",
+  "lettersHint": "RSD",
+  "allowedLetters": "Allowed Letters: A, B, D, E, G, H, J, K, L, N, R, S, T, U, V, W, X, Z",
+  "submitEntryTicket": "SUBMIT ENTRY TICKET",
+  "logout": "LOGOUT",
+  "logoutTitle": "Logout",
+  "logoutMessage": "Are you sure you want to logout?",
+  "cannotLogoutYet": "Cannot Logout Yet",
+  "pendingTicketsMessage": "You have unsynced ticket(s). Please check your internet connection. We are trying to sync them in the background.",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "required": "Required",
+  "cannotStartWithZero": "Cannot start with 0",
+  "mustBeExactly3Letters": "Must be exactly 3 letters",
+  "photoRequired": "Vehicle photo is required. Please capture a photo first.",
+  "submittingTicket": "Submitting Entry Ticket...",
+  "submissionFailed": "Submission failed: {error}",
+  "@submissionFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "captureFailure": "Failed to capture: {error}",
+  "@captureFailure": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "aiOcrLoading": "AI OCR: Extracting plate details...",
+  "aiOcrSuccess": "AI Auto-detection: License plate populated! \n Please review and correct if needed.",
+  "ticketInsertedSuccess": "Ticket inserted successfully",
+  "closingAutomatically": "Closing automatically…",
+
+  "logFiles": "Log Files",
+  "noLogFilesFound": "No log files found",
+  "today": "Today",
+  "failedToShare": "Failed to share: {error}",
+  "@failedToShare": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "changeLanguage": "العربية",
+  "languageCode": "en"
+}

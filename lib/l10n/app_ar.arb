@@ -1,0 +1,103 @@
+﻿{
+  "@@locale": "ar",
+
+  "appNameEn": "التنفيذي",
+  "parkAssistTagline": "إدارة مواقف متميزة",
+  "poweredBy": "مدعوم من",
+  "unifiAccess": "UnifiAccess",
+  "parking": "مواقف",
+
+  "signIn": "تسجيل الدخول",
+  "accessPortal": "الوصول إلى بوابة الكاشير اليدوي",
+  "email": "البريد الإلكتروني",
+  "emailHint": "example@domain.com",
+  "emailRequired": "البريد الإلكتروني مطلوب",
+  "emailInvalid": "أدخل بريدًا إلكترونيًا صحيحًا (مثال: example@domain.com)",
+  "password": "كلمة المرور",
+  "passwordHint": "أدخل كلمة المرور",
+  "passwordRequired": "كلمة المرور مطلوبة",
+  "loginButton": "دخول",
+  "enterEmailPassword": "يرجى إدخال البريد الإلكتروني وكلمة المرور",
+  "notAuthorizedCashier": "حسابك غير مخول ككاشير يدوي. يرجى التواصل مع المسؤول.",
+  "noRegisteredDevices": "لا يوجد جهاز مسجل لهذا الحساب. يرجى التواصل مع المسؤول.",
+  "incorrectEmailPassword": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+  "accountInactive": "الحساب غير موجود أو غير نشط. يرجى التواصل مع المسؤول.",
+  "serverError": "حدث خطأ في السيرفر. حاول مرة أخرى لاحقًا أو تواصل مع الدعم.",
+  "loginFailed": "فشل تسجيل الدخول. حاول مرة أخرى.",
+  "sessionExpired": "انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+  "accessDenied": "تم رفض الوصول. غير مصرح لك باستخدام التطبيق.",
+  "serverNotFound": "لا يمكن الوصول إلى السيرفر. تحقق من الاتصال.",
+  "noInternet": "لا يوجد اتصال بالإنترنت. تحقق من الشبكة.",
+  "loginErrorGeneric": "حدث خطأ ما. حاول مرة أخرى.",
+  "shareLogs": "مشاركة السجلات",
+  "authenticating": "جارٍ المصادقة...",
+  "welcomeBack": "مرحباً بعودتك، {name}!",
+  "@welcomeBack": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+
+  "manualTicketEntry": "إدخال تذكرة يدوي",
+  "automaticAi": "الذكاء الاصطناعي التلقائي",
+  "takePhoto": "التقاط صورة",
+  "capturedPhoto": "الصورة الملتقطة",
+  "noPhotoCaptured": "لم يتم التقاط صورة",
+  "aiPlateDetectionResult": "نتيجة كشف اللوحة بالذكاء الاصطناعي",
+  "plateDetectionResult": "نتيجة كشف اللوحة",
+  "detectingPlate": "جارٍ كشف اللوحة...",
+  "plateCropPending": "في انتظار قص اللوحة",
+  "cameraCaptureCanceled": "تم إلغاء التقاط الصورة",
+  "failedToProcessPhoto": "فشل في معالجة الصورة الملتقطة",
+  "plateDetectionFailed": "فشل في اكتشاف اللوحة — يرجى إدخال اللوحة يدويًا",
+  "plateDetectionError": "لم يتم اكتشاف لوحة في هذه الصورة، يرجى التقاط صورة أوضح أو إدخال الرقم يدويًا",
+  "ocrPlateNotReadable": "تعذر قراءة اللوحة — يرجى إدخالها يدويًا",
+  "plateNumber": "رقم اللوحة",
+  "digitsLabel": "الأرقام (بحد أقصى 4)",
+  "digitsHint": "1234",
+  "lettersLabel": "الحروف السعودية (بحد أقصى 3)",
+  "lettersHint": "ر س د",
+  "allowedLetters": "الحروف المسموح بها: A, B, D, E, G, H, J, K, L, N, R, S, T, U, V, W, X, Z",
+  "submitEntryTicket": "إرسال تذكرة الدخول",
+  "logout": "تسجيل الخروج",
+  "logoutTitle": "تسجيل الخروج",
+  "logoutMessage": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
+  "cannotLogoutYet": "لا يمكن تسجيل الخروج الآن",
+  "pendingTicketsMessage": "يوجد تذاكر غير مرسلة. يرجى التأكد من الاتصال بالإنترنت. نحاول مزامنتها في الخلفية.",
+  "cancel": "إلغاء",
+  "ok": "حسناً",
+  "required": "مطلوب",
+  "cannotStartWithZero": "لا يمكن أن يبدأ بالصفر",
+  "mustBeExactly3Letters": "يجب أن يكون 3 أحرف بالضبط",
+  "photoRequired": "صورة المركبة مطلوبة. يرجى التقاط صورة أولاً.",
+  "submittingTicket": "جارٍ إرسال تذكرة الدخول...",
+  "submissionFailed": "فشل الإرسال: {error}",
+  "@submissionFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "captureFailure": "فشل الالتقاط: {error}",
+  "@captureFailure": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "aiOcrLoading": "الذكاء الاصطناعي: جارٍ استخراج بيانات اللوحة...",
+  "aiOcrSuccess": "اكتشاف تلقائي: تم ملء رقم اللوحة! \n يرجى المراجعة والتصحيح إذا لزم الأمر.",
+  "ticketInsertedSuccess": "تم إدراج التذكرة بنجاح",
+  "closingAutomatically": "جارٍ الإغلاق تلقائيًا…",
+
+  "logFiles": "ملفات السجل",
+  "noLogFilesFound": "لا توجد ملفات سجل",
+  "today": "اليوم",
+  "failedToShare": "فشل المشاركة: {error}",
+  "@failedToShare": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "changeLanguage": "English",
+  "languageCode": "ar"
+}

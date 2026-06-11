@@ -13,8 +13,12 @@ class DioHelper {
 
   static init() {
     dio = Dio(BaseOptions(
-      // baseUrl: 'http://192.168.1.10:5169/',
-      baseUrl: 'https://mcmobileapi.unifiaccess.com/',
+
+
+      // baseUrl: 'http://10.0.2.2:5169/', //emulator
+
+      baseUrl: 'http://192.168.1.10:5169/', // real device
+      // baseUrl: 'https://mcmobileapi.unifiaccess.com/',  // live
       receiveDataWhenStatusError: true,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
