@@ -506,8 +506,12 @@ class _EntryTicketScreenState extends State<EntryTicketScreen> {
                             context.read<UploadImageFileCubit>().state;
                         final photoData = _getPhotoData(uploadState);
 
-                        if (photoData.imagePath == null) {
-                          CustomSnackBar.showError(context, l10n.photoRequired);
+                        // Photo is ONLY required when AI mode is ON
+                        if (isAiEnabled && photoData.imagePath == null) {
+                          CustomSnackBar.showError(
+                            context,
+                            l10n.photoRequired,
+                          );
                           return;
                         }
 

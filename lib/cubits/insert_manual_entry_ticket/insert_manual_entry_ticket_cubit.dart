@@ -13,7 +13,6 @@ part 'insert_manual_entry_ticket_state.dart';
 class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
   InsertManualEntryTicketCubit() : super(InsertManualEntryTicketInitial());
 
-  // Translates C# format structure: _ticketType + "{0}{6}{1}{7}{2}{8}{3}{9}{4}{10}{5}{11}"
   String generateTicketNumber() {
     final time = DateTime.now();
     final rand = Random();
@@ -28,18 +27,24 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
     const ticketType = "1";
     const constVal = "01";
 
-    // Now carParkId is available from login response stored in SharedPreferences
     final carParkId = SharedPreferenceHelper.getData(
         key: SharedPreferencesKeys.carParkId) as String? ?? '0';
 
     return "$ticketType$hh${r[0]}$mm${r[1]}$dd${r[2]}$MM${second[0]}$yy${second[1]}$constVal$carParkId";
   }
 
-
-  /// Submits a ticket. The user ALWAYS sees success — if the API fails (or the
-  /// image upload fails), the ticket is queued in SQLite and retried later by
-  /// [PendingTicketRetryService]. The same locally-generated [ticketNumber] is
-  /// reused on retry so the server can dedupe.
+  /// Submits a ticket.
+  ///
+  /// Behavior based on [isAiEnabled] and image params:
+  /// ─────────────────────────────────────────────────────────────────────────
+  /// AI ON  + photo taken  → insert ticket  +  upload image
+  /// AI ON  + no photo     → BLOCKED in UI before this is ever called
+  /// AI OFF                → insert ticket only, image upload is fully skipped
+  /// ─────────────────────────────────────────────────────────────────────────
+  ///
+  /// Always emits [InsertManualEntryTicketSuccessState] to the user.
+  /// If the API fails, the ticket is queued in SQLite and retried later
+  /// by [PendingTicketRetryService].
   Future<void> insertManualTicket({
     required bool isAiEnabled,
     required String? imagePath,
@@ -51,25 +56,39 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
     emit(InsertManualEntryTicketLoadingState());
 
     // 1. Read device info from SharedPreferences
-    final facilityId = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.facilityId) as String? ?? "0";
-    final carParkId = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.carParkId) as String? ?? "0";
-
-    final deviceIdRaw = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.deviceID);
+    final facilityId = SharedPreferenceHelper.getData(
+        key: SharedPreferencesKeys.facilityId) as String? ??
+        "0";
+    final carParkId = SharedPreferenceHelper.getData(
+        key: SharedPreferencesKeys.carParkId) as String? ??
+        "0";
+    final deviceIdRaw =
+    SharedPreferenceHelper.getData(key: SharedPreferencesKeys.deviceID);
     final deviceId = int.tryParse(deviceIdRaw?.toString() ?? '') ?? 0;
-    // final token = SharedPreferenceHelper.getData(key: SharedPreferencesKeys.token) as String? ?? "";
 
     final entrySyncTime = DateTime.now().toIso8601String();
 
-    // 2. Generate ticket number + combine plate fields → NNNNLLL format
+    // 2. Generate ticket number + combine plate → NNNNLLL
     final ticketNo = generateTicketNumber();
     final plate = "$plateNumbers$plateLetters".toUpperCase();
 
-    // Upload the resized copy (≤720px). Fall back to the full image only if the
-    // resized one is somehow missing, so an upload is never silently dropped.
+    // 3. Determine whether an image should be uploaded.
+    //    When AI is OFF, imagePath/base64Image/uploadBase64 are all null
+    //    (forced by the screen), so hasImage will always be false.
+    //    When AI is ON but the user somehow skipped the photo (guarded by UI),
+    //    hasImage will also be false and no upload is attempted.
     final imageToUpload = (uploadBase64 != null && uploadBase64.isNotEmpty)
         ? uploadBase64
         : base64Image;
-    final hasImage = imageToUpload != null && imageToUpload.isNotEmpty;
+    // Upload image whenever a photo exists — regardless of AI mode.
+    // AI mode only controls OCR/plate detection, not image upload.
+    final bool hasImage = imageToUpload != null && imageToUpload.isNotEmpty;
+
+    await LogHelper.log(
+      'TICKET',
+      'insertManualTicket called — '
+          'aiEnabled=$isAiEnabled, hasImage=$hasImage, plate=$plate, ticketNo=$ticketNo',
+    );
 
     // ── STEP 1: InsertEntryTicket ──────────────────────────────────────────
     bool inserted = false;
@@ -78,47 +97,64 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
         deviceId: deviceId,
         plate: plate,
         ticketNumber: ticketNo,
-        // token: token,
         entrySyncTime: entrySyncTime,
       );
+      await LogHelper.log(
+          'API', 'InsertEntryTicket result=$inserted for ticketNo=$ticketNo');
     } catch (e, stackTrace) {
-      await LogHelper.logException('InsertEntryTicket failed — will queue', e, stackTrace);
+      await LogHelper.logException(
+          'InsertEntryTicket failed — will queue', e, stackTrace);
     }
 
-    // ── STEP 2: UpdateEntryTicketImage (only if insert succeeded) ──────────
-    bool imageDone = !hasImage; // nothing to upload counts as done
+    // ── STEP 2: UpdateEntryTicketImage ─────────────────────────────────────
+    // Only runs when:
+    //   • AI mode is ON         (isAiEnabled = true)
+    //   • A photo was taken     (hasImage = true)
+    //   • Insert succeeded      (inserted = true)
+    bool imageDone = !hasImage; // if no image needed → treat as done
     if (inserted && hasImage) {
       emit(InsertManualEntryTicketImageUploadingState());
       try {
         imageDone = await TicketApiService.updateEntryTicketImage(
           deviceId: deviceId,
           ticketNumber: ticketNo,
-          base64Image: imageToUpload,
-          // token: token,
+          base64Image: imageToUpload!,
         );
+        await LogHelper.log(
+            'API', 'UpdateEntryTicketImage result=$imageDone for ticketNo=$ticketNo');
       } catch (e, stackTrace) {
-        await LogHelper.logException('UpdateEntryTicketImage failed — will queue', e, stackTrace);
+        await LogHelper.logException(
+            'UpdateEntryTicketImage failed — will queue', e, stackTrace);
         imageDone = false;
       }
+    } else if (!hasImage) {
+      await LogHelper.log(
+        'API',
+        'Image upload skipped — no photo was taken, ticketNo=$ticketNo',
+      );
     }
 
     // ── Queue whatever did not complete ────────────────────────────────────
     final now = DateTime.now().toIso8601String();
     if (!inserted) {
-      // Whole ticket failed — queue insert (+ image if we have one).
+      // Insert failed → queue insert + image (if AI was on and had image)
       await PendingTicketDb.enqueue(PendingTicket(
         deviceId: deviceId,
         plate: plate,
         ticketNumber: ticketNo,
         base64Image: hasImage ? imageToUpload : null,
         needsInsert: true,
-        needsImage: hasImage,
-        createdAt: now, entrySyncTime: entrySyncTime,
+        needsImage: hasImage, // only retry image if AI was on
+        createdAt: now,
+        entrySyncTime: entrySyncTime,
       ));
-      await LogHelper.log('OUTBOX',
-          'Queued ticket $ticketNo for retry (insert failed, plate=$plate, imageQueued=$hasImage)');
+      await LogHelper.log(
+        'OUTBOX',
+        'Queued ticket $ticketNo for retry '
+            '(insert failed, plate=$plate, imageQueued=$hasImage)',
+      );
     } else if (!imageDone) {
-      // Insert succeeded but image upload failed — queue an image-only retry.
+      // Insert succeeded but image upload failed → queue image-only retry
       await PendingTicketDb.enqueue(PendingTicket(
         deviceId: deviceId,
         plate: plate,
@@ -126,15 +162,23 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
         base64Image: imageToUpload,
         needsInsert: false,
         needsImage: true,
-        createdAt: now, entrySyncTime: entrySyncTime,
+        createdAt: now,
+        entrySyncTime: entrySyncTime,
       ));
-      await LogHelper.log('OUTBOX',
-          'Queued image-only retry for ticket $ticketNo (insert ok, image failed)');
+      await LogHelper.log(
+        'OUTBOX',
+        'Queued image-only retry for ticket $ticketNo '
+            '(insert ok, image failed)',
+      );
     } else {
-      await LogHelper.log('API', 'Ticket $ticketNo submitted successfully (plate=$plate)');
+      await LogHelper.log(
+        'API',
+        'Ticket $ticketNo submitted successfully '
+            '(plate=$plate, imageUploaded=$hasImage)',
+      );
     }
 
-    // Free the cached base64 — the queued copy (if any) lives in SQLite now.
+    // Free the cached base64 — queued copy (if any) lives in SQLite now
     _clearBase64Cache();
 
     // ── Always report success to the user ──────────────────────────────────
@@ -150,12 +194,11 @@ class InsertManualEntryTicketCubit extends Cubit<InsertManualEntryTicketState> {
   }
 
   void _clearBase64Cache() {
-    SharedPreferenceHelper.removeData(key: SharedPreferencesKeys.capturedImagePath);
+    SharedPreferenceHelper.removeData(
+        key: SharedPreferencesKeys.capturedImagePath);
   }
 
   void reset() {
     emit(InsertManualEntryTicketInitial());
   }
-
-
 }

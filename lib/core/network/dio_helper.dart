@@ -17,8 +17,8 @@ class DioHelper {
 
       // baseUrl: 'http://10.0.2.2:5169/', //emulator
 
-      baseUrl: 'http://192.168.1.10:5169/', // real device
-      // baseUrl: 'https://mcmobileapi.unifiaccess.com/',  // live
+      // baseUrl: 'http://192.168.1.10:5169/', // real device
+      baseUrl: 'https://mcmobileapi.unifiaccess.com/',  // live
       receiveDataWhenStatusError: true,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 15),
@@ -26,12 +26,12 @@ class DioHelper {
 
     // Bypass self-signed SSL certificate on local dev server.
     // IMPORTANT: Remove this block before releasing to production.
-  //   (dio!.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
-  //     final client = HttpClient();
-  //     client.badCertificateCallback =
-  //         (X509Certificate cert, String host, int port) => true;
-  //     return client;
-  //   };
+    // (dio!.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+    //   final client = HttpClient();
+    //   client.badCertificateCallback =
+    //       (X509Certificate cert, String host, int port) => true;
+    //   return client;
+    // };
   }
 
   // ── Token resolution ────────────────────────────────────────────────────
